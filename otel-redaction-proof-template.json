@@ -1,0 +1,29 @@
+{
+  "proof_id": "",
+  "queried_by": "",
+  "input_payload": {
+    "sku": "",
+    "member_id": "",
+    "customer_segment": "",
+    "was_price": null,
+    "now_price": null,
+    "full_payload": "",
+    "correlation_id": ""
+  },
+  "redaction_stage": "",
+  "downstream_otel_log_sample": {
+    "correlation_id": "",
+    "sku": "",
+    "rule_id": "",
+    "redaction_applied": true
+  },
+  "absent_fields": [
+    "member_id",
+    "customer_segment",
+    "was_price",
+    "now_price",
+    "full_payload"
+  ],
+  "decision": "live_proof_pass",
+  "residual_risk": ""
+}

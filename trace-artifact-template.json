@@ -1,0 +1,30 @@
+{
+  "trace_id": "",
+  "ticket_id": "",
+  "brief_id": "",
+  "agent": "",
+  "model": "",
+  "trigger": "",
+  "identity": "",
+  "operating_envelope": "",
+  "approved_repo": "",
+  "draft_pr": "",
+  "tool_calls": [],
+  "tests": {
+    "command": "",
+    "passed": 0,
+    "failed": 0
+  },
+  "review": {
+    "reviewer_subagent": "",
+    "decision": "",
+    "reason": ""
+  },
+  "cost": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "estimated_usd": 0
+  },
+  "guardrail_events": []
+}

@@ -1,0 +1,23 @@
+{
+  "proof_id": "",
+  "workspace_or_environment": "",
+  "identity": "",
+  "scope_owner": "",
+  "approved_tool": {
+    "server": "",
+    "tool": "",
+    "action": "",
+    "result_summary": "",
+    "trace_or_log_link": ""
+  },
+  "denied_or_refused_tool": {
+    "server": "",
+    "tool": "",
+    "action": "",
+    "denial_type": "",
+    "denial_text": "",
+    "trace_or_log_link": ""
+  },
+  "decision": "",
+  "residual_risk": ""
+}

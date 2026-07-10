@@ -1,0 +1,45 @@
+rules:
+  - id: ppcs.no-default-parameters-in-rules
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/app/rules.py"
+    message: >-
+      PPCS rule functions should not use default parameter values. Make required
+      data explicit so the agent cannot hide missing promo fields behind a
+      convenient default.
+    pattern-regex: "def\\s+\\w+\\s*\\([^)]*=.*\\)\\s*:"
+
+  - id: ppcs.no-raw-promo-payload-logging
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Do not log raw promo, pricing, customer, member, or payload objects. Log a
+      stable event id, rule id, and redacted reason code instead.
+    pattern-regex: "\\b(logging|logger)\\.(debug|info|warning|error|exception)\\s*\\([^\\n]*(promo|payload|customer|member|price|pricing)"
+
+  - id: ppcs.no-sensitive-payload-print
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Do not print promo, pricing, customer, member, or payload objects. Use the
+      trace and redacted telemetry path instead.
+    pattern-regex: "\\bprint\\s*\\([^\\n]*(promo|payload|customer|member|price|pricing)"
+
+  - id: ppcs.no-raw-outbound-http
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Raw outbound HTTP is outside the PPCS operating envelope. Use an approved
+      platform route, governed MCP tool, or stop and request a design decision.
+    pattern-regex: "\\b(requests|httpx)\\.(get|post|put|patch|delete)\\s*\\("
+
+  - id: ppcs.no-silent-broad-exception
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Do not silently swallow broad exceptions. Return specific diagnostic
+      evidence or narrow the exception type so reviewers can reason about the
+      failure.
+    pattern-regex: "except\\s+Exception\\s*(?:as\\s+\\w+)?\\s*:\\s*(?:#.*)?\\n\\s*(pass|return\\s+None|return\\s+\\{\\})"

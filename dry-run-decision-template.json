@@ -1,0 +1,25 @@
+{
+  "decision_date": "",
+  "owner": "",
+  "workspace": "",
+  "mode": "",
+  "accepted_fallbacks": [],
+  "live_proofs": {
+    "participant_export_clean": "",
+    "repo_pr_path": "",
+    "agent_dispatch": "",
+    "app_smoke": "",
+    "lakebase_state": "",
+    "uc_boundary": "",
+    "mcp_scope": "",
+    "mlflow_trace": "",
+    "otel_redaction": "",
+    "ai_gateway_usage": "",
+    "ai_gateway_budget": "",
+    "scoreboard_update": ""
+  },
+  "attendee_access_evidence_files": [],
+  "remaining_risks": [],
+  "go_no_go": "",
+  "notes": ""
+}

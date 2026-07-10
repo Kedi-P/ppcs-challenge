@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# uv
+# NOTE: uv.lock is intentionally excluded from this challenge repo.
+
+# Env / secrets — never commit these
+.env
+.env.*
+*.pem
+*.key
+secrets.*
+databricks.yml
+app.yaml
+.databricks/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local proof / evidence scratch (submit via the scoreboard flow instead)
+proof-scratch/
+*.local.json

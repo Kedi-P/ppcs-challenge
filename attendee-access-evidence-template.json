@@ -1,0 +1,47 @@
+{
+  "participant": "",
+  "team": "",
+  "timestamp": "",
+  "repo": {
+    "github_account": "",
+    "repository": "",
+    "viewer_permission": "",
+    "access_check_branch": "",
+    "draft_pr_url": "",
+    "status": ""
+  },
+  "databricks": {
+    "workspace_url": "",
+    "workspace_identity": "",
+    "profile_or_auth_method": "",
+    "app_url": "",
+    "app_validate_response": "",
+    "lakebase_state": {
+      "access_mode": "",
+      "proof_endpoint_or_query": "",
+      "identity_model": "",
+      "result_summary": "",
+      "status": ""
+    },
+    "trace_or_run_id": "",
+    "trace_access_mode": "",
+    "uc_boundary": {
+      "identity": "",
+      "allowed_object": "",
+      "allowed_result": "",
+      "denied_object": "",
+      "denied_error_class": "",
+      "status": ""
+    },
+    "status": ""
+  },
+  "agent": {
+    "tool_name": "",
+    "read_only_prompt_completed": false,
+    "approved_tool_result": "",
+    "denied_tool_result": "",
+    "trace_or_log_link": "",
+    "status": ""
+  },
+  "blockers": []
+}
