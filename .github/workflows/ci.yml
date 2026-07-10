@@ -6,12 +6,16 @@ name: PPCS CI
 #   unit         — fast, no infra: runs the pytest suite. Tolerates ONLY the
 #                  intentional PPCS-001 seed failure (see below); any other red
 #                  test fails the build.
-#   lakebase-ci  — the "getting to prod" demo, for real: cuts an ephemeral
-#                  Lakebase branch off production (copy-on-write clone), runs
-#                  the SQL migrations against an isolated CI schema on that
-#                  clone, then ALWAYS tears the branch down. Proves the schema
-#                  change applies cleanly on prod-shaped data without touching
-#                  production. Runs only when Databricks CI secrets are present.
+#   lakebase-ci  — REFERENCE ONLY on GitHub. This job models the "getting to
+#                  prod" cycle (ephemeral branch off production, migrate an
+#                  isolated CI schema on the clone, then always tear it down).
+#                  It does NOT run in the workshop: the Lakebase workspace is
+#                  firewalled and GitHub-hosted runners have no network path to
+#                  it, and we do not put Databricks credentials in a PUBLIC
+#                  repo. The LIVE version of this cycle runs inside the Coles
+#                  perimeter via Azure DevOps — see azure-pipelines.yml. This
+#                  job stays here as the readable reference implementation and
+#                  is gated off by default (PPCS_LAKEBASE_CI_ENABLED).
 #
 # The PPCS challenge ships one intentional failing seed test (PPCS-001,
 # tests/test_rules.py::test_marginal_discount_below_threshold_fails). Baseline

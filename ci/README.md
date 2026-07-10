@@ -8,42 +8,44 @@ Runs the pytest suite. The challenge ships ONE intentional failing seed test
 (PPCS-001). CI is green when only that test is red, or when all tests pass.
 Logic in `evaluate_pytest.py`.
 
-## 2. `lakebase-ci` job (the "getting to prod" demo, for real)
+## 2. `lakebase-ci` — where the live cycle actually runs
 
-On every pull request, this job:
+The "getting to prod" cycle — cut an ephemeral Lakebase branch off `production`,
+migrate an isolated CI schema on the clone, test, always tear down — is modelled
+in two places:
 
-1. **Cuts an ephemeral Lakebase branch off `production`** — a copy-on-write
-   clone of the whole database, in seconds (`lakebase_branch.py create`).
-2. **Runs the SQL migrations** (`service/migrations/*.sql`) against an isolated
-   CI schema on that clone (`run_migrations.py`) — the real test that a schema
-   change applies cleanly on prod-shaped data.
-3. **Runs integration tests** against the clone endpoint.
-4. **Always tears the branch down** (`lakebase_branch.py delete`), even on
-   failure — so the 10-unarchived-branch limit is never exhausted.
+- **`.github/workflows/ci.yml` (`lakebase-ci` job): REFERENCE ONLY.** It does
+  NOT run in the workshop. GitHub-hosted runners live in GitHub's cloud and have
+  no network path to the firewalled Lakebase workspace, and we will not put
+  Databricks credentials in a public repo. It stays as the readable reference
+  and is gated off by default.
+- **`azure-pipelines.yml` (`lakebase_ci` stage): THE LIVE PIPELINE.** Runs on a
+  self-hosted Azure DevOps agent pool INSIDE the Coles perimeter, where the agent
+  can reach Lakebase and the service-principal secret comes from an ADO variable
+  group / Key Vault — never from the public repo.
 
-This is the manual `ci-branch-demo.sh` cycle, automated. Migrations flow *up*
-(PR clone → staging → production); production data flows *down* from the
-Lakehouse via reverse-ETL. See `docs/lakebase-tenancy-and-ci.md` in the
-facilitator repo for the full model.
+Both invoke the exact same portable scripts below, so the logic is defined once.
 
-### Enabling `lakebase-ci`
+### Enabling the live Azure DevOps pipeline
 
-It runs only when both are set on the repo:
+1. Create a **self-hosted agent pool** inside the perimeter (agents must be able
+   to reach `*.database.<region>.azuredatabricks.net`). Set its name in
+   `azure-pipelines.yml` (`pool.name`, marked `<<CHANGE>>`).
+2. Create an ADO **variable group** `ppcs-lakebase-ci` (Key Vault-backed
+   recommended) with:
+   - `DATABRICKS_HOST`
+   - `DATABRICKS_CLIENT_ID`
+   - `DATABRICKS_CLIENT_SECRET` (mark secret)
+   - `PPCS_LAKEBASE_CI_ENABLED = true`
+3. Create an ADO pipeline of type **GitHub**, point it at
+   `dgokeeffe/ppcs-challenge` via a GitHub service connection. ADO manages the
+   PR/branch triggers declared in the YAML.
 
-- **Variable** `PPCS_LAKEBASE_CI_ENABLED = true`
-  (`gh variable set PPCS_LAKEBASE_CI_ENABLED --body true`)
-- **Secrets** (a Databricks service principal with Lakebase branch rights):
-  - `DATABRICKS_HOST`
-  - `DATABRICKS_CLIENT_ID`
-  - `DATABRICKS_CLIENT_SECRET`
+Until `PPCS_LAKEBASE_CI_ENABLED = true`, only the `unit` stage runs.
 
-  ```bash
-  gh secret set DATABRICKS_HOST --body "https://adb-....azuredatabricks.net"
-  gh secret set DATABRICKS_CLIENT_ID --body "<sp-client-id>"
-  gh secret set DATABRICKS_CLIENT_SECRET --body "<sp-secret>"
-  ```
-
-Without those, only the fast `unit` job runs — safe default for forks/offline.
+The GitHub `lakebase-ci` job stays gated off (do NOT set
+`PPCS_LAKEBASE_CI_ENABLED` as a GitHub variable / do NOT add Databricks secrets
+to this public repo).
 
 ## Files
 

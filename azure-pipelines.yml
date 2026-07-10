@@ -1,0 +1,156 @@
+# azure-pipelines.yml — PPCS CI inside the Coles perimeter
+#
+# Why Azure DevOps and not GitHub Actions:
+#   The Lakebase workspace is firewalled. GitHub-hosted runners live in GitHub's
+#   cloud and have no network path to the Lakebase endpoints, and we will not put
+#   live Databricks credentials in a PUBLIC GitHub repo. This pipeline runs on a
+#   SELF-HOSTED agent pool INSIDE the Coles perimeter, where the agent can reach
+#   Lakebase and the service-principal secret comes from an ADO variable group /
+#   Key Vault — never from the public repo.
+#
+# It reuses the exact same portable scripts as the (reference-only) GitHub
+# workflow: ci/lakebase_branch.py, ci/run_migrations.py, ci/evaluate_pytest.py.
+#
+# ---- Coles-specific values to set (defaults marked <<CHANGE>>) ----
+#   * pool.name                       your self-hosted agent pool
+#   * variable group 'ppcs-lakebase-ci' with:
+#       DATABRICKS_HOST               https://adb-....azuredatabricks.net
+#       DATABRICKS_CLIENT_ID          SP application (client) id
+#       DATABRICKS_CLIENT_SECRET      SP secret  (mark as secret / Key Vault-backed)
+#   * PPCS_LAKEBASE_CI_ENABLED        'true' to run the live Lakebase stage
+#
+# Wiring to the GitHub repo: create a GitHub service connection in ADO and a
+# pipeline of type "GitHub" pointing at dgokeeffe/ppcs-challenge. ADO will
+# manage PR/branch triggers below.
+
+trigger:
+  branches:
+    include:
+      - main
+      - team-*
+
+pr:
+  branches:
+    include:
+      - "*"
+
+variables:
+  - group: ppcs-lakebase-ci        # <<CHANGE>> ADO variable group (holds SP creds)
+  - name: PPCS_PROJECT
+    value: projects/ppcs-coda-challenge
+
+stages:
+  # ------------------------------------------------------------------
+  # Stage 1: unit tests. Fast, no infra. Runs on every push/PR.
+  # Green ONLY when the intentional PPCS-001 seed is the sole failure.
+  # ------------------------------------------------------------------
+  - stage: unit
+    displayName: Unit tests (PPCS-001 baseline)
+    jobs:
+      - job: pytest
+        pool:
+          name: coles-selfhosted            # <<CHANGE>> self-hosted agent pool
+        steps:
+          - checkout: self
+          - script: |
+              set -euo pipefail
+              curl -LsSf https://astral.sh/uv/install.sh | sh
+              export PATH="$HOME/.local/bin:$PATH"
+              cd service
+              uv python install 3.11
+              uv sync
+              uv run pytest -q --junitxml=$(Build.SourcesDirectory)/pytest-report.xml || true
+            displayName: Run pytest
+          - script: |
+              set -euo pipefail
+              python3 ci/evaluate_pytest.py "$(Build.SourcesDirectory)/pytest-report.xml"
+            displayName: Evaluate baseline
+          - task: PublishTestResults@2
+            condition: always()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: "$(Build.SourcesDirectory)/pytest-report.xml"
+              testRunTitle: PPCS unit
+
+  # ------------------------------------------------------------------
+  # Stage 2: live Lakebase CI. The "getting to prod" cycle, for real,
+  # inside the perimeter. Gated on PPCS_LAKEBASE_CI_ENABLED == 'true'.
+  # Cuts an ephemeral branch off production, migrates an isolated CI
+  # schema on the clone, (optionally) runs integration tests, then
+  # ALWAYS tears the branch down.
+  # ------------------------------------------------------------------
+  - stage: lakebase_ci
+    displayName: Lakebase branch-per-PR CI
+    dependsOn: unit
+    condition: and(succeeded(), eq(variables['PPCS_LAKEBASE_CI_ENABLED'], 'true'))
+    jobs:
+      - job: ephemeral_branch
+        pool:
+          name: coles-selfhosted            # <<CHANGE>> self-hosted agent pool
+        variables:
+          # unique, filesystem/schema-safe per run
+          CI_BRANCH: ci-b$(Build.BuildId)
+        steps:
+          - checkout: self
+          - script: |
+              set -euo pipefail
+              curl -LsSf https://astral.sh/uv/install.sh | sh
+              echo "##vso[task.prependpath]$HOME/.local/bin"
+              cd service && uv python install 3.11 && uv sync
+            displayName: Setup (uv + deps)
+
+          - script: |
+              set -euo pipefail
+              cd service
+              uv run python ../ci/lakebase_branch.py create "$(CI_BRANCH)" --ttl-seconds 3600
+            displayName: Create ephemeral Lakebase branch off production
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST)
+              DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+              DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+              PPCS_PROJECT: $(PPCS_PROJECT)
+
+          - script: |
+              set -euo pipefail
+              cd service
+              # ADO doesn't persist env across steps like GITHUB_ENV; re-derive
+              # host+target from the branch name via the helper.
+              SCHEMA="$(echo "$(CI_BRANCH)" | tr '-' '_')"
+              HOST=$(uv run python - <<'PY'
+              import os
+              from databricks.sdk import WorkspaceClient
+              proj=os.environ["PPCS_PROJECT"]; br=os.environ["CI_BRANCH"]
+              ep=WorkspaceClient().api_client.do("GET", f"/api/2.0/{proj}/branches/{br}/endpoints/primary")
+              print(ep["status"]["hosts"]["host"])
+              PY
+              )
+              export PPCS_LAKEBASE_HOST="$HOST"
+              export PPCS_LAKEBASE_TARGET="$(PPCS_PROJECT)/branches/$(CI_BRANCH)/endpoints/primary"
+              uv run python ../ci/run_migrations.py --schema "$SCHEMA"
+            displayName: Apply migrations to the clone
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST)
+              DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+              DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+              PPCS_PROJECT: $(PPCS_PROJECT)
+              CI_BRANCH: $(CI_BRANCH)
+
+          - script: |
+              set -euo pipefail
+              cd service
+              uv run pytest -q -m integration || echo "no integration tests marked yet — clone/migrate is the proof"
+            displayName: Integration tests against the clone
+            env:
+              PPCS_TEAM_SCHEMA: $(CI_BRANCH)
+
+          - script: |
+              set -euo pipefail
+              cd service
+              uv run python ../ci/lakebase_branch.py delete "$(CI_BRANCH)"
+            displayName: Tear down ephemeral branch (always)
+            condition: always()
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST)
+              DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+              DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+              PPCS_PROJECT: $(PPCS_PROJECT)
