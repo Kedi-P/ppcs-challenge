@@ -46,6 +46,12 @@ stay readable.
 - Do not commit secrets, tokens, deploy config (`databricks.yml`, `app.yaml`),
   or `.env` files. `.gitignore` blocks the common ones; stay alert anyway.
 
+## Your team's database (Lakebase)
+
+Each team gets its own Lakebase branch + schema, pre-seeded with the tables the
+backlog uses. See `LAKEBASE.md` for how to connect (no secrets — credentials are
+minted per connection) and how the autoscaling exercise works.
+
 ## Running the service locally
 
 ```bash
