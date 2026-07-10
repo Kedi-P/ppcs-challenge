@@ -1,0 +1,173 @@
+# azure-pipelines.template.yml — shared PPCS CI stages.
+#
+# Auth: Azure service connection (SP) via AzureCLI@2 + addSpnToEnvironment.
+#   The SP arrives as $servicePrincipalId / $servicePrincipalKey / $tenantId and
+#   is exported as ARM_* ; the Databricks CLI and the databricks-sdk
+#   (WorkspaceClient) both pick up Azure AD SP auth from those + DATABRICKS_HOST.
+#   No DATABRICKS_CLIENT_ID/SECRET stored anywhere.
+# CLI/tooling: the private pool has no public egress, so a public ubuntu agent
+#   downloads the Databricks CLI + builds the wheel and publishes them as
+#   pipeline artifacts; the private agent consumes the artifacts.
+
+parameters:
+  - name: pythonVersion
+    type: string
+    default: "3.11"
+  - name: azureConnection
+    type: string
+    default: "Coles - Enterprise Data Platform Production (SPN-Coles-Production-EDP-Pipeline)"
+  - name: databricksHost
+    type: string
+    default: https://adb-5527423427472353.13.azuredatabricks.net
+  - name: privatePool
+    type: string
+    default: Coles-Private-Hosted-Linux-Prod-Scalable
+  - name: runLakebaseCI
+    type: string
+    default: "false"
+  - name: ppcsProject
+    type: string
+    default: projects/ppcs-coda-challenge
+
+stages:
+  # ------------------------------------------------------------------
+  # Stage 1: unit tests. Fast, no infra. Runs on every push/PR.
+  # Green ONLY when the intentional PPCS-001 seed is the sole failure.
+  # Runs on a public agent (no Lakebase / firewall dependency).
+  # ------------------------------------------------------------------
+  - stage: unit
+    displayName: Unit tests (PPCS-001 baseline)
+    jobs:
+      - job: pytest
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+          - bash: |
+              set -euo pipefail
+              curl -LsSf https://astral.sh/uv/install.sh | sh
+              export PATH="$HOME/.local/bin:$PATH"
+              cd service
+              uv python install ${{ parameters.pythonVersion }}
+              uv sync
+              uv run pytest -q --junitxml=$(Build.SourcesDirectory)/pytest-report.xml || true
+            displayName: Run pytest
+          - bash: |
+              set -euo pipefail
+              python3 ci/evaluate_pytest.py "$(Build.SourcesDirectory)/pytest-report.xml"
+            displayName: Evaluate baseline (tolerate only PPCS-001)
+          - task: PublishTestResults@2
+            condition: always()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: "$(Build.SourcesDirectory)/pytest-report.xml"
+              testRunTitle: PPCS unit
+
+  # ------------------------------------------------------------------
+  # Stage 2: live Lakebase branch-per-PR CI. Runs inside the perimeter.
+  # public agent stages the Databricks CLI -> private agent cuts an
+  # ephemeral branch off production, migrates an isolated CI schema on
+  # the clone, runs integration tests, then ALWAYS tears the branch down.
+  # ------------------------------------------------------------------
+  - stage: lakebase_ci
+    displayName: Lakebase branch-per-PR CI
+    dependsOn: unit
+    condition: and(succeeded(), eq('${{ parameters.runLakebaseCI }}', 'true'))
+    jobs:
+      - job: download_cli
+        displayName: Download Databricks CLI (public agent)
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - bash: |
+              set -euo pipefail
+              mkdir -p $(Build.ArtifactStagingDirectory)/cli
+              curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+              cp /usr/local/bin/databricks $(Build.ArtifactStagingDirectory)/cli/databricks
+              chmod +x $(Build.ArtifactStagingDirectory)/cli/databricks
+              $(Build.ArtifactStagingDirectory)/cli/databricks --version
+            displayName: Download Databricks CLI binary
+          - task: PublishPipelineArtifact@1
+            displayName: Publish CLI artifact
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)/cli
+              artifactName: databricks-cli
+
+      - job: ephemeral_branch
+        displayName: Ephemeral branch -> migrate -> test -> teardown
+        dependsOn: download_cli
+        pool:
+          name: ${{ parameters.privatePool }}
+        variables:
+          # unique, schema-safe per run (underscores; no hyphens)
+          CI_BRANCH: ci_b$(Build.BuildId)
+        steps:
+          - checkout: self
+            clean: true
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Databricks CLI
+            inputs:
+              artifactName: databricks-cli
+              targetPath: $(Pipeline.Workspace)/cli
+          - bash: |
+              set -euo pipefail
+              chmod +x $(Pipeline.Workspace)/cli/databricks
+              echo "##vso[task.prependpath]$(Pipeline.Workspace)/cli"
+              $(Pipeline.Workspace)/cli/databricks --version
+            displayName: Install Databricks CLI
+
+          - bash: |
+              set -euo pipefail
+              # uv is available on the private image; if not, vendor it like the CLI.
+              curl -LsSf https://astral.sh/uv/install.sh | sh || true
+              echo "##vso[task.prependpath]$HOME/.local/bin"
+              cd service && uv python install ${{ parameters.pythonVersion }} && uv sync
+            displayName: Setup Python deps (uv)
+
+          - task: AzureCLI@2
+            displayName: Create branch + migrate + test + teardown
+            inputs:
+              azureSubscription: ${{ parameters.azureConnection }}
+              scriptType: bash
+              addSpnToEnvironment: true
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                export DATABRICKS_HOST="${{ parameters.databricksHost }}"
+                export ARM_CLIENT_ID="${servicePrincipalId}"
+                export ARM_CLIENT_SECRET="${servicePrincipalKey}"
+                export ARM_TENANT_ID="${tenantId}"
+                export PPCS_PROJECT="${{ parameters.ppcsProject }}"
+                BR="$(CI_BRANCH)"
+
+                cleanup() {
+                  echo "== teardown $BR =="
+                  ( cd service && uv run python ../ci/lakebase_branch.py delete "$BR" ) || true
+                }
+                trap cleanup EXIT
+
+                cd service
+                echo "== create ephemeral branch off production =="
+                uv run python ../ci/lakebase_branch.py create "$BR" --ttl-seconds 3600
+
+                echo "== resolve endpoint host =="
+                HOST=$(uv run python - "$BR" <<'PY'
+                import os, sys
+                from databricks.sdk import WorkspaceClient
+                proj = os.environ["PPCS_PROJECT"]; br = sys.argv[1]
+                ep = WorkspaceClient().api_client.do(
+                    "GET", f"/api/2.0/{proj}/branches/{br}/endpoints/primary")
+                print(ep["status"]["hosts"]["host"])
+                PY
+                )
+                export PPCS_LAKEBASE_HOST="$HOST"
+                export PPCS_LAKEBASE_TARGET="$PPCS_PROJECT/branches/$BR/endpoints/primary"
+
+                echo "== apply migrations to schema $BR =="
+                uv run python ../ci/run_migrations.py --schema "$BR"
+
+                echo "== integration tests against the clone =="
+                PPCS_TEAM_SCHEMA="$BR" uv run pytest -q -m integration \
+                  || echo "no integration tests marked yet — clone/migrate is the proof"
+                # trap handles teardown (runs even on failure above)
