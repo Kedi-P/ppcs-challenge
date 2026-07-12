@@ -17,9 +17,16 @@ venv/
 *.pem
 *.key
 secrets.*
+.databricks/
+
+# Deploy config (databricks.yml / app.yaml) IS tracked in this repo: the PPCS
+# app is deployed from here via a Databricks Git folder. Only the placeholder
+# templates under service/ are committed (env values are REPLACE_WITH_*); never
+# commit a copy with real schema/warehouse/Lakebase values filled in.
 databricks.yml
 app.yaml
-.databricks/
+!service/databricks.yml
+!service/app.yaml
 
 # OS / editor
 .DS_Store
