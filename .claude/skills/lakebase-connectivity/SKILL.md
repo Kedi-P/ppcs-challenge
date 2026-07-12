@@ -89,9 +89,9 @@ the working convention is **positional: `coda-0N` → `team0N`** (teams 09/10 ha
 no app).
 
 **Do NOT hardcode SP client ids here — they are sensitive infra identifiers and
-this repo has a public GitHub remote.** Following the same PII pattern as
-`assign_codas.py`, the concrete `coda-0N` → SP-client-id → schema table lives in
-Databricks Workspace storage, not git:
+this repo has a public GitHub remote.** The facilitator script
+`omnigent/workshop/assign_codas.py` writes the concrete `coda-0N` → SP-client-id
+→ schema table to Databricks Workspace storage, not git:
 
 ```bash
 databricks workspace export \
