@@ -27,6 +27,16 @@ Why this mechanism:
 Validation:
 smoke use | syntax/format check | reviewed application against one PR | platform denial | trace comparison
 
+Eval dataset/version:
+
+Regression case added:
+
+Before replay result:
+
+After replay result:
+
+Eval threshold changed:
+
 Expected effect:
 
 Owner for pilot:
@@ -48,6 +58,8 @@ When to revisit or remove:
 | A policy breach would be dangerous if overridden | Governed MCP, Unity Catalog, or platform policy | Containment needs a hard block, not advice. |
 | Noisy research pollutes the main run | Sub-agent | Summary returns; noisy context stays out of the main loop. |
 | Tests miss the real acceptance criteria | Test/check | Makes correctness verifiable before review. |
+| Same failure returns after a fix | Golden regression eval | Proves the old failure is now caught before review. |
+| A custom skill, hook, plugin, MCP server, policy, or reviewer config will be reused | Customization supply-chain review | Makes source, owner, version, scope, and deny behavior explicit before the pilot inherits it. |
 
 Hooks and reviewer configs are quality controls. Agent specs make the harness
 repeatable. Agent-session/platform policies and execution scope are containment

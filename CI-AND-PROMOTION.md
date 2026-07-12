@@ -20,7 +20,7 @@ tenants; a "branch per team" would not (Lakebase caps *live* branches at 10).
 
 ## What CI does on every pull request
 
-The `lakebase-ci` job in `.github/workflows/ci.yml`:
+The **lakebase-ci** job in the PPCS CI workflow:
 
 1. **Cuts an ephemeral branch off `production`** — an instant copy-on-write
    clone of the whole database (all team schemas + data).

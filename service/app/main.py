@@ -108,24 +108,39 @@ def platform_uc_check() -> dict:
 
 @app.get("/platform/lakebase-check")
 def platform_lakebase_check() -> dict:
+    import uuid
+
     import psycopg
 
     lakebase_target = os.environ.get(
         "PPCS_LAKEBASE_TARGET",
-        "projects/ppcs-coda-challenge/branches/production/endpoints/primary",
+        "mlflow-trace-test",
     )
     lakebase_host = os.environ.get(
         "PPCS_LAKEBASE_HOST",
-        "ep-sweet-mud-e4rrnat1.database.australiaeast.azuredatabricks.net",
+        "ep-restless-thunder-e4pr9wx3.database.australiaeast.azuredatabricks.net",
     )
     team_schema = os.environ.get("PPCS_TEAM_SCHEMA", "team04")
 
     client = _workspace_client()
-    credential = client.api_client.do(
-        "POST",
-        "/api/2.0/postgres/credentials",
-        body={"endpoint": lakebase_target},
-    )
+    # Two Lakebase generations, two credential APIs (see docs/live-dry-run-commands.md):
+    #  - Autoscaling (Neon-style) target looks like
+    #    "projects/<p>/branches/<b>/endpoints/<e>" -> POST /api/2.0/postgres/credentials
+    #    with body {"endpoint": target}.
+    #  - Provisioned (classic) target is a bare instance name -> POST
+    #    /api/2.0/database/credentials with body {"request_id", "instance_names":[name]}.
+    if lakebase_target.startswith("projects/"):
+        credential = client.api_client.do(
+            "POST",
+            "/api/2.0/postgres/credentials",
+            body={"endpoint": lakebase_target},
+        )
+    else:
+        credential = client.api_client.do(
+            "POST",
+            "/api/2.0/database/credentials",
+            body={"request_id": str(uuid.uuid4()), "instance_names": [lakebase_target]},
+        )
     token = credential["token"]
 
     # The Postgres role is the identity that minted the credential — for an app

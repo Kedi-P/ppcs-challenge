@@ -105,3 +105,7 @@ accordingly.
 Connection-pool and bundle patterns follow
 [databricks-solutions/lakebase-fastapi-app](https://github.com/databricks-solutions/lakebase-fastapi-app)
 (scale-to-zero-aware pooling, OAuth rotation, `postgres_*` bundle resources).
+
+For how teams share the Lakebase project, how Git CI relates to Lakebase
+branches, and what runs against live Postgres versus mocked tests, see
+`LAKEBASE.md`.

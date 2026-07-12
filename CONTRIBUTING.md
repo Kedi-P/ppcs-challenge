@@ -40,11 +40,11 @@ stay readable.
 ## Pull requests
 
 - Open PRs as **draft** first; that is the review surface.
-- Use the PR template (auto-loaded from `.github/PULL_REQUEST_TEMPLATE.md`).
+- Use the GitHub PR template (auto-loaded when you open a pull request).
 - Every PR must state its **Trigger / Context / Steerability** and link the
   dispatch trace. Catching a trap beats shipping a feature — call it out.
-- Do not commit secrets, tokens, deploy config (`databricks.yml`, `app.yaml`),
-  or `.env` files. `.gitignore` blocks the common ones; stay alert anyway.
+- Do not commit secrets, tokens, deploy config, or env files. Gitignore blocks
+  the common ones; stay alert anyway.
 
 ## Your team's database (Lakebase)
 

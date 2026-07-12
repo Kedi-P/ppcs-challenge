@@ -146,6 +146,74 @@ Downstream evidence:
 Decision:
 ```
 
+## Proof 7: PR-Only Delivery Boundary
+
+Claim: the agent can recommend, branch, test, and open draft PRs, but cannot merge or deploy.
+
+Evidence to capture:
+
+- Draft PR link.
+- Any merge/deploy request refused or blocked.
+- Human review record for the final decision.
+- No autonomous deploy action in trace.
+
+Result:
+
+```text
+Draft PR:
+Merge/deploy pressure:
+Boundary evidence:
+Human decision:
+```
+
+## Proof 8: MCP Tool Governance Boundary
+
+Claim: approved tools can be used under the right identity, while unselected,
+overbroad, or destructive tools are denied or routed to human approval.
+
+Evidence to capture:
+
+- MCP server and tool name.
+- Named identity used for the call.
+- Credential or auth path, without exposing secret values.
+- One allowed call inside the approved scope.
+- One denied, rejected, or escalated call outside the approved scope.
+- Audit, trace, or policy row for both outcomes.
+- Human decision on whether the tool scope is acceptable for a pilot.
+
+Result:
+
+```text
+Allowed tool/action:
+Denied or escalated tool/action:
+Identity:
+Audit/trace evidence:
+Human decision:
+```
+
+## Proof 9: Recovery Boundary
+
+Claim: the team can stop, pause, revoke, or roll back the agent path if it
+misbehaves.
+
+Evidence to capture:
+
+- Stop or pause path for an active or queued agent run.
+- Token, grant, MCP tool, or execution-scope revocation path.
+- Revert or rollback path for a bad draft PR or app change.
+- Named owner who can take each action.
+- Evidence location for the recovery action or dry-run procedure.
+
+Result:
+
+```text
+Stop/pause path:
+Revoke path:
+Rollback path:
+Owner:
+Evidence:
+```
+
 ## Optional Proof: Code-Shape Guardrail
 
 Claim: a repeated review finding has been turned into a local Semgrep rule or
@@ -167,26 +235,6 @@ Rule id:
 Command:
 Result:
 Decision:
-```
-
-## Proof 7: PR-Only Delivery Boundary
-
-Claim: the agent can recommend, branch, test, and open draft PRs, but cannot merge or deploy.
-
-Evidence to capture:
-
-- Draft PR link.
-- Any merge/deploy request refused or blocked.
-- Human review record for the final decision.
-- No autonomous deploy action in trace.
-
-Result:
-
-```text
-Draft PR:
-Merge/deploy pressure:
-Boundary evidence:
-Human decision:
 ```
 
 ## Security Review Summary

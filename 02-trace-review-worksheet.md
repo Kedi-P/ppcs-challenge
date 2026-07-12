@@ -49,6 +49,30 @@ run is acceptable.
 If tests pass but trace or reviewer evaluation fails, do not accept the PR.
 Green tests are necessary evidence; they are not the whole evaluation.
 
+## 2b. Trace Completeness Gate
+
+Before scoring the run, check whether the trace is complete enough to support
+the claim. A polished PR with a thin trace is still weak evidence.
+
+| Required Field | Evidence | Present? |
+|---|---|---|
+| Root trace or span id |  | Yes / no |
+| Ticket id and brief id |  | Yes / no |
+| Initiating human or trigger source |  | Yes / no |
+| Acting identity |  | Yes / no |
+| Parent/child tool spans |  | Yes / no |
+| Guardrail, policy, or denial spans if claimed |  | Yes / no / not applicable |
+| Test, static-check, or CI span |  | Yes / no |
+| Draft PR, diff, or review artifact link |  | Yes / no |
+| Token, cost, or cache fields when available |  | Yes / no / not available |
+| Redaction evidence for sensitive fields |  | Yes / no / not applicable |
+| Release-readiness packet if claiming deploy readiness |  | Yes / no / not applicable |
+| Explanation for any missing span |  | Yes / no / not applicable |
+
+If ticket id, acting identity, tool calls, tests/checks, PR artifact, guardrail
+events, or cost fields are missing, cap the run as weak evidence even if the
+diff looks good.
+
 ## 3. Inspect Tool Calls
 
 | Tool Call | Target | Result | In Envelope? |

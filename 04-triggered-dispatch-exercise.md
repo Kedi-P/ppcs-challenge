@@ -35,6 +35,20 @@ A failed CI or build-validation event may trigger analysis, a review comment, or
 a draft PR update. It must not trigger autonomous merge, deploy, approval,
 branch-policy changes, or release-control changes.
 
+For a CI/build-validation follow-up, make these controls explicit:
+
+- Workflow permissions are read-only except for the scoped draft branch or
+  review comment path.
+- The agent has a max-turn or max-duration budget.
+- Only the failing PR branch is in scope.
+- CI, branch protection, release policy, deployment config, and required-check
+  files are out of scope unless a human explicitly writes a separate brief for
+  those files.
+- Concurrency is limited so repeated failures do not create overlapping fix
+  attempts against the same branch.
+- Any proposed release-readiness change is staged for human approval and
+  attached to the trace.
+
 ## Candidate Tickets
 
 Good Round 3 candidates:
@@ -72,6 +86,13 @@ Steerability:
 
 Delivery boundary:
 Draft PR only. No merge, deploy, secrets, ungranted data, unapproved repos, or unapproved egress.
+
+CI/build-validation controls, if applicable:
+- Workflow permissions:
+- Max turns or timeout:
+- Concurrency key:
+- Policy files explicitly out of scope:
+- Release-readiness evidence required:
 ```
 
 ## Parallel Dispatch Plan
