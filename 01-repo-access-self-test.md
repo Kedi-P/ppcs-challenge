@@ -17,6 +17,14 @@ Use a throwaway branch and PR. Do not use a real ticket branch for this test.
 gh auth status
 ```
 
+If you have multiple GitHub accounts, switch to the workshop one before
+continuing — CoDA sync writeback to the Databricks Git folder uses this identity:
+
+```bash
+gh auth switch
+gh auth status
+```
+
 Pass criteria:
 
 - The account shown is the account you will use during the workshop.

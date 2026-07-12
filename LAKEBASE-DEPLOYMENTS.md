@@ -170,6 +170,68 @@ export DATABRICKS_CONFIG_PROFILE=lakemeter   # or your workshop profile
 Shows: schemas in `production` → cut clone → mutate clone → `production` unchanged
 → delete clone.
 
+## Shared platform — developer hygiene
+
+The workshop does **not** give each developer a private sandbox. Lakebase compute,
+CoDA workspace storage, and the GitHub repo are all shared. Misunderstanding that
+breaks sync writeback from CoDA local storage in the App to the Databricks Git
+folder — and can stomp another team's schema or branch.
+
+### What is shared
+
+| Resource | Shared? | What that means for you |
+|---|---|---|
+| Lakebase `production` branch + `primary` endpoint | Yes (default layout) | All team schemas sit on one DB branch and one compute endpoint. Stay in **your** schema; your app's load affects shared compute. |
+| Lakebase project | Yes | One project (`ppcs-coda-challenge`). Do not run owner DDL against another team's schema. |
+| Databricks workspace storage (`.coda/…`) | Yes | CoDA app state, SP pairings (`ppcs_lakebase_pairings.json`), and Git-folder sync metadata live here — not in git. |
+| CoDA Apps (`coda-0N`) | Shared pool | Eight apps for ten teams; positional mapping `coda-0N` → `team0N`. Your facilitator assigns which app your team uses. |
+| GitHub repo `ppcs-challenge` | Yes | Everyone works in one repo on team branches. |
+
+### GitHub identity — `gh auth switch`
+
+CoDA and the Databricks Git folder both push and pull using **your** GitHub
+credentials. If you have multiple `gh` accounts (personal + work), the wrong
+identity breaks pushes, draft PRs, and the CoDA → workspace sync writeback.
+
+```bash
+gh auth status          # which account is active?
+gh auth switch          # pick the workshop account
+gh auth status          # confirm before you dispatch
+```
+
+Run this at the start of every session and again after switching machines or VPN.
+
+### Isolated checkouts — use git worktrees
+
+CoDA keeps agent work in **local storage inside the App** and periodically
+**syncs (writeback)** to the linked Databricks Git folder in the workspace. That
+sync assumes a stable mapping: one app slot → one repo clone → one active branch.
+
+Reusing one working directory for multiple team branches, or letting two agents
+edit the same checkout, causes writeback to land on the wrong branch or creates
+merge conflicts the agent must not auto-resolve.
+
+**Use a worktree per dispatch (or per parallel agent):**
+
+```bash
+# from your main clone
+git fetch origin
+git worktree add ../ppcs-team-03-ppcs-054 origin/team-03/PPCS-054-connection-pool
+cd ../ppcs-team-03-ppcs-054
+
+# point CoDA at this worktree path when you dispatch
+# when done:
+cd ../ppcs-challenge
+git worktree remove ../ppcs-team-03-ppcs-054
+```
+
+Rules:
+
+- One worktree per active ticket branch (see also `04-triggered-dispatch-exercise.md`).
+- Do not dispatch two agents into the same worktree.
+- Confirm `gh auth status` matches the account that owns the repo remote before
+  relying on sync writeback.
+
 ## Related docs
 
 | Need | File |

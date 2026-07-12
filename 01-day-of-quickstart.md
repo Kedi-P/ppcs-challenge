@@ -11,10 +11,17 @@ All work happens in one repo: **`dgokeeffe/ppcs-challenge`** — the PPCS servic
 the backlog, and your team branch. This is your only approved repo.
 
 ```bash
+gh auth switch          # workshop GitHub account — required for CoDA sync writeback
+gh auth status
 gh repo clone dgokeeffe/ppcs-challenge
 cd ppcs-challenge
 git switch team-<NN>   # your team number, e.g. team-03
 ```
+
+Lakebase compute, CoDA workspace storage, and this repo are **shared** across
+teams. Use a **git worktree** per ticket branch so CoDA can write back from App
+local storage to the correct branch in the Databricks Git folder — see
+`LAKEBASE-DEPLOYMENTS.md` § Shared platform.
 
 If you cannot see the repo or your branch, tell a facilitator before the round
 starts — do not lose challenge time on access.

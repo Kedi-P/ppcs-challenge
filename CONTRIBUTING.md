@@ -54,6 +54,13 @@ Each team gets its own Lakebase branch + schema, pre-seeded with the tables the
 backlog uses. See `LAKEBASE.md` for how to connect (no secrets — credentials are
 minted per connection) and how the autoscaling exercise works.
 
+For the full deployment map (shared compute, shared CoDA workspace storage, CI
+branches), read `LAKEBASE-DEPLOYMENTS.md`. Before dispatching:
+
+- Run `gh auth switch` so the active GitHub account matches the workshop repo.
+- Use a **git worktree** per ticket branch so CoDA sync writeback from App local
+  storage to the Databricks Git folder lands on the correct branch.
+
 ## Running the service locally
 
 ```bash
