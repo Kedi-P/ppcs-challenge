@@ -39,12 +39,32 @@ def _client():
     return WorkspaceClient()
 
 
+# Resource identifiers used in request bodies / env (no API prefix).
 def _branch_path(name: str) -> str:
     return f"{PROJECT}/branches/{name}"
 
 
 def _endpoint_path(name: str) -> str:
     return f"{_branch_path(name)}/endpoints/primary"
+
+
+# REST URLs for the beta Postgres surface. The branch/endpoint routes live
+# under /api/2.0/postgres/ — without that prefix the workspace returns
+# 404 "No API found". (The credentials mint path already includes it.)
+def _branches_url() -> str:
+    return f"/api/2.0/postgres/{PROJECT}/branches"
+
+
+def _branch_url(name: str) -> str:
+    return f"/api/2.0/postgres/{_branch_path(name)}"
+
+
+def _endpoints_url(name: str) -> str:
+    return f"{_branch_url(name)}/endpoints"
+
+
+def _endpoint_url(name: str) -> str:
+    return f"/api/2.0/postgres/{_endpoint_path(name)}"
 
 
 def _do(client, method: str, path: str, body: dict | None = None) -> dict:
@@ -58,7 +78,7 @@ def create(name: str, ttl_seconds: int, github_env: str | None) -> None:
     _do(
         client,
         "POST",
-        f"/api/2.0/{PROJECT}/branches",
+        _branches_url(),
         {
             "branch_id": name,
             "spec": {
@@ -72,7 +92,7 @@ def create(name: str, ttl_seconds: int, github_env: str | None) -> None:
     _do(
         client,
         "POST",
-        f"/api/2.0/{_branch_path(name)}/endpoints",
+        _endpoints_url(name),
         {
             "endpoint_id": "primary",
             "spec": {
@@ -100,7 +120,7 @@ def _wait_for_host(client, name: str, timeout: int = 180) -> str:
     deadline = time.time() + timeout
     last = None
     while time.time() < deadline:
-        ep = _do(client, "GET", f"/api/2.0/{_endpoint_path(name)}")
+        ep = _do(client, "GET", _endpoint_url(name))
         host = (ep.get("status") or {}).get("hosts", {}).get("host")
         if host:
             return host
@@ -124,7 +144,7 @@ def delete(name: str) -> None:
     # Idempotent: teardown must never fail the build.
     try:
         client = _client()
-        _do(client, "DELETE", f"/api/2.0/{_branch_path(name)}")
+        _do(client, "DELETE", _branch_url(name))
         print(f"deleted branch {name}")
     except Exception as exc:  # noqa: BLE001 - best-effort cleanup
         print(f"warning: delete of {name} failed (ignored): {exc}", file=sys.stderr)

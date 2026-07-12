@@ -128,10 +128,17 @@ def platform_lakebase_check() -> dict:
     )
     token = credential["token"]
 
+    # The Postgres role is the identity that minted the credential — for an app
+    # service principal that's its application-id UUID, which the SDK surfaces
+    # as current_user.user_name. DATABRICKS_CLIENT_ID is unset in the app
+    # runtime (SP self-auth via apiKeyHelper), so deriving it from the client is
+    # the only reliable source.
+    db_user = os.environ.get("PPCS_LAKEBASE_USER") or client.current_user.me().user_name
+
     with psycopg.connect(
         host=lakebase_host,
         dbname="databricks_postgres",
-        user=os.environ.get("DATABRICKS_CLIENT_ID"),
+        user=db_user,
         password=token,
         sslmode="require",
     ) as conn:
