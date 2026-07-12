@@ -14,6 +14,8 @@ The SDLC phases did not disappear. Implementation got faster; judgment did not.
 The hard work moved earlier — into specification quality, goal clarity, context
 validation, and post-run evaluation.
 
+![Agentic SDLC on Databricks — same phases, new control points](assets/agentic-sdlc-databricks.png)
+
 ```text
 build to spec  →  build to a goal  →  validate (before)  →  evaluate (after)
 ```

@@ -2,6 +2,8 @@
 
 Use this in Round 3 to compare agent loops. The point is not to crown a model. The point is to find which **harness** produced reviewable, governed work with the least rework.
 
+![Memory, trace, and live state](assets/memory-trace-live-state.png)
+
 ## 1. Pick Two Runs
 
 Choose two dispatches to compare. They can be:

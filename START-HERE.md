@@ -28,10 +28,18 @@ The day is three scored rounds:
 Catching an unsafe path is worth more than shipping a feature. The score is
 **governed, reviewable value with evidence** — not code volume.
 
+## Visual map
+
+![Governed developer workflow — agent, evidence packet, draft PR, human release](assets/ppcs-developer-workflow-release.png)
+
+The agent works inside the harness; **you** own merge, deploy, and acceptance.
+Diagrams for each round live in `assets/` and in the linked guides below.
+
 ## The files you open, in order
 
 | When | Open |
 |---|---|
+| PPCS system you are changing | `01-base-app-architecture.md` + `assets/ppcs-solution-architecture.png` |
 | First, to understand your role and the loop | `00-participant-guide.md` |
 | Before Round 1, the endorsed ticket process | `00-ways-of-working.md` (build to spec → goal → validate/evaluate) |
 | Before every dispatch, kept open | `00-operating-envelope-card.md` (what agents may / may not do) |

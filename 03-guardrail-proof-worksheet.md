@@ -4,6 +4,8 @@ Use this worksheet during Round 2 to produce evidence that the operating envelop
 
 The goal is not to say "we told the agent not to do it." The goal is to show that the platform, tools, permissions, and review process stop unsafe behavior under a named identity.
 
+![Contextual governance](assets/contextual-governance.png)
+
 ## Team
 
 - Team name:

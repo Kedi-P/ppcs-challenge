@@ -2,6 +2,8 @@
 
 Use this whenever a team wants credit for a draft PR, guardrail proof, or triggered dispatch. The trace is not decorative audit exhaust; it is evidence for the review decision.
 
+![Memory, trace, and live state — what to correlate in review](assets/memory-trace-live-state.png)
+
 If you use a reviewer sub-agent, start from `02-reviewer-subagent-template.md` and attach its findings here. The reviewer sub-agent can help structure the audit, but the human team still owns the accept / send back / reject / escalate decision.
 
 ## 1. Identify The Run

@@ -8,6 +8,8 @@ this repo, review their draft PRs, and govern what is safe to accept.
 Read `README.md` first for the challenge framing, then `START-HERE.md` and
 `00-participant-guide.md` for how a team actually works a ticket.
 
+![Governed developer workflow](assets/ppcs-developer-workflow-release.png)
+
 ## Teams
 
 - ~10 teams of 2–3 engineers (`team-01` … `team-10`).

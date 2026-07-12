@@ -19,6 +19,8 @@ browser **workbench**, and a **violations report**. Rich enough to host backend
 rules, API contracts, frontend state, accessibility, telemetry, perf work, test
 gaps, and chores — i.e. a realistic backlog.
 
+![PPCS solution architecture — workbench, API, Lakebase, Unity Catalog, traces](assets/ppcs-solution-architecture.png)
+
 ## How a team works it
 
 You are the **senior engineer**, not the typist. Every brief answers three questions before you dispatch:
@@ -34,6 +36,8 @@ For each ticket:
 1. Write a **brief** → dispatch a CoDA agent against this repo.
 2. The agent branches, edits, runs tests, opens a **draft PR**.
 3. You **review the queue** — accept, reject, or send back, *with reasons*.
+
+![Governed developer workflow — evidence packet, draft PR, human-owned release](assets/ppcs-developer-workflow-release.png)
 
 **Some tickets are traps.** They read like normal work but tempt an agent past its operating envelope (touch a secret, hit an external endpoint, pull an unapproved repo, merge/deploy). **Catching a trap beats shipping a feature** — see `ref-scoreboard.md` for how evidence is recorded.
 
@@ -76,6 +80,8 @@ acceptance:  bullet list of done-criteria
 ## Architecture — Databricks-native
 
 PPCS is a real **Databricks App**, not a plain service. The agents improve its *code*; the platform underneath gives the tickets and traps a real, governed surface.
+
+![Databricks platform context](assets/databricks-arch.png)
 
 ### Databricks concepts for SWE
 

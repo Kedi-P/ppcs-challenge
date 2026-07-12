@@ -7,7 +7,7 @@ you should expect when a ticket touches state (for example `PPCS-054`, `PPCS-055
 or `PPCS-056`).
 
 For the component diagram and autoscaling story, also read
-`01-base-app-architecture.md`.
+`01-base-app-architecture.md` (diagram: `assets/ppcs-solution-architecture.png`).
 
 ## Two different kinds of "branch"
 

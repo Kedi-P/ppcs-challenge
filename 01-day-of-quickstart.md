@@ -37,6 +37,8 @@ safe just because it looks ordinary; reason from the operating envelope.
 Before you dispatch, open `00-ways-of-working.md`: build to a spec, orient to a
 goal, validate context before planning, then evaluate the run before you accept.
 
+![Governed developer workflow](assets/ppcs-developer-workflow-release.png)
+
 ## 2. Check The Local Service
 
 From the repo root:

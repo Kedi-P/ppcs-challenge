@@ -38,6 +38,8 @@ Agents may not:
 
 If a ticket appears to require something outside this envelope, stop and document the access, approval, or design decision needed. Catching that boundary is scored higher than shipping an unsafe feature.
 
+![Governed developer workflow](assets/ppcs-developer-workflow-release.png)
+
 ## The Loop
 
 Use the same loop for every ticket. The endorsed Round 1 process is spelled out
@@ -224,6 +226,8 @@ Do not add unrelated Q&A into the active run just because the agent is already
 open. That is how scoped work turns into context bloat and hidden steering.
 
 ## Evidence Pack
+
+![Evidence packet — diff, tests, trace, guardrail events, human review](assets/evidence-packet.png)
 
 For each scored submission, capture:
 

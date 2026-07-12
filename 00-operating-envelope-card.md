@@ -17,6 +17,8 @@ provide observability and spend visibility.
 Existing CoDA rehearsal proof may still appear in fallback artifacts until a new
 CoDA dry run replaces it.
 
+![Contextual governance — tool calls judged in context, not in isolation](assets/contextual-governance.png)
+
 ## Agents May
 
 - Read approved tickets and participant materials.

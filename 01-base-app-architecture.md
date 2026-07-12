@@ -7,6 +7,8 @@ Lakebase autoscaling exercise.
 
 Workspace: `fe-vm-lakemeter` (AWS), CLI profile `lakemeter`.
 
+![PPCS solution architecture](assets/ppcs-solution-architecture.png)
+
 ## Component view
 
 ```

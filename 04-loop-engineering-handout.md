@@ -4,6 +4,8 @@ Loop engineering is the discipline of designing the repeatable agent workflow, n
 
 In this challenge, the unit of work is not "agent wrote code." The unit of work is a governed loop that starts with a ticket and ends with a reviewed PR, trace evidence, and a reusable lesson.
 
+![Harness improvement flywheel](assets/harness-improvement-flywheel.png)
+
 ## R.V.P.I.
 
 Use R.V.P.I. inside every loop:

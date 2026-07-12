@@ -4,6 +4,8 @@ Use this for every scoreboard claim. One submission should support one claim:
 a governed PR, guardrail proof, trap caught, trigger proof, harness insight, or
 reusable skill/config.
 
+![Evidence packet](assets/evidence-packet.png)
+
 ## Claim
 
 | Field | Value |

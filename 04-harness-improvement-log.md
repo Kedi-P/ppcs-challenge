@@ -4,6 +4,8 @@ Use this when a team turns a repeated agent failure into a durable harness
 change. The point is to leave the workshop with reusable operating knowledge,
 not just one-off prompts.
 
+![Harness improvement flywheel](assets/harness-improvement-flywheel.png)
+
 ## Entry Template
 
 ```text
