@@ -47,7 +47,7 @@ Diagrams for each round live in `assets/` and in the linked guides below.
 | To shape a dispatch | `02-brief-template.md` |
 | To review what came back | `02-reviewer-subagent-template.md`, `02-trace-review-worksheet.md` |
 | To run against the service | `service/` (the PPCS app + tests) |
-| When a ticket touches state | `LAKEBASE.md`, `01-base-app-architecture.md` |
+| When a ticket touches state | `LAKEBASE-DEPLOYMENTS.md`, `LAKEBASE.md`, `01-base-app-architecture.md` |
 | When setup misbehaves | `01-day-of-quickstart.md`, `01-repo-access-self-test.md` |
 | To submit evidence | `ref-evidence-submission-template.md` |
 

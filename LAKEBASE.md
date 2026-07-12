@@ -9,6 +9,10 @@ or `PPCS-056`).
 For the component diagram and autoscaling story, also read
 `01-base-app-architecture.md` (diagram: `assets/ppcs-solution-architecture.png`).
 
+**Start here for the deployment map:** `LAKEBASE-DEPLOYMENTS.md` — production
+branch, per-team schemas, App deploys, ephemeral CI branches, and **why there is
+no dev database**.
+
 ## Two different kinds of "branch"
 
 The workshop uses the word *branch* in two places. Keep them separate.
@@ -21,10 +25,22 @@ The workshop uses the word *branch* in two places. Keep them separate.
 | CI runs here? | **Yes** — the review gate runs on each draft PR | **No** — CI does not provision or migrate Lakebase |
 | Merge / deploy | Human accepts PR; facilitator deploys the app | Already live; the app reconnects after deploy |
 
-Git branching is how you ship code. Lakebase branching is how the platform
-isolates each team's database and autoscaling endpoint.
+Git branching is how you ship code. Lakebase **ephemeral** branches (off
+`production`) are how CI validates migrations — see `LAKEBASE-DEPLOYMENTS.md`.
 
-## How teams share one Lakebase project
+## Runtime layouts (ask your facilitator which is live)
+
+| Layout | Lakebase | Best for |
+|---|---|---|
+| **Default** | One `production` branch; schemas `team01`…`team10` | Multi-tenant prod pattern; matches `CI-AND-PROMOTION.md` |
+| **Alternate** | Branch `team01`…`team10` each with its own endpoint | Round 3 per-team autoscaling graphs on `lakemeter` |
+
+The section below describes the **alternate** branch-per-team layout when
+facilitators run `provision_team_lakebase.py`. If your app target is
+`…/branches/production/endpoints/primary`, you are on the **default** layout —
+schemas on `production`; skip to [CI and Lakebase](#ci-and-lakebase--what-runs-where).
+
+## How teams share one Lakebase project (branch-per-team layout)
 
 Facilitators create **one** autoscaling Lakebase project for the workshop —
 typically `ppcs-coda-challenge` on workspace `fe-vm-lakemeter` (CLI profile
@@ -211,6 +227,7 @@ Stack section).
 
 | Need | File |
 |---|---|
+| **Deployments map** (production, apps, CI branches) | `LAKEBASE-DEPLOYMENTS.md` |
 | Architecture diagram + autoscaling | `01-base-app-architecture.md` |
 | Migrations + ephemeral Lakebase CI branches | `CI-AND-PROMOTION.md` |
 | Team Git workflow | `CONTRIBUTING.md` |

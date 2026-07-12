@@ -10,9 +10,9 @@ Logic in `evaluate_pytest.py`.
 
 ## 2. `lakebase-ci` — where the live cycle actually runs
 
-The "getting to prod" cycle — cut an ephemeral Lakebase branch off `production`,
-migrate an isolated CI schema on the clone, test, always tear down — is modelled
-in two places:
+See **`../LAKEBASE-DEPLOYMENTS.md`** for the mermaid map. The "getting to prod"
+cycle — cut an ephemeral Lakebase branch off `production`, migrate an isolated
+CI schema on the clone, test, always tear down — is modelled in two places:
 
 - **`.github/workflows/ci.yml` (`lakebase-ci` job): REFERENCE ONLY.** It does
   NOT run in the workshop. GitHub-hosted runners live in GitHub's cloud and have

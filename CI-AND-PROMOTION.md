@@ -4,6 +4,9 @@ This is the model behind the CI you'll see run on your pull requests. It's also
 a teaching point: how a change moves from your branch to production on a managed
 Postgres (Lakebase), and where each database primitive fits.
 
+See **`LAKEBASE-DEPLOYMENTS.md`** for the full diagram (Git → CI → production
+branch → team schemas → App deploys).
+
 ## One sentence
 
 > **Branch = disposable full-DB clone for automation. Schema + role = durable
