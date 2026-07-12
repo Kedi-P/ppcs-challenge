@@ -42,6 +42,7 @@ Participant materials:
 - `01-attendee-pre-read.md` — short preparation note to send before the workshop.
 - `01-day-of-quickstart.md` — first-lab run sheet from checkout to first evidence submission.
 - `00-participant-guide.md` — how teams brief, dispatch, review, and submit evidence.
+- `00-ways-of-working.md` — endorsed Round 1 process: build to spec → goal → validate/evaluate.
 - `04-loop-engineering-handout.md` — one-page model for the repeatable agent loop.
 - `02-brief-template.md` — copy/paste Trigger / Context / Steerability dispatch template.
 - `02-draft-pr-review-transcript.md` — worked example of a senior review decision.

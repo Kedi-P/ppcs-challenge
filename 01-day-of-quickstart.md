@@ -5,11 +5,26 @@ reviewable submission.
 
 Workshop format: Monday 13 July 2026, 09:30-17:30, working in teams of 2-3.
 
+## 0. Clone Your Team Repo
+
+All work happens in one repo: **`dgokeeffe/ppcs-challenge`** — the PPCS service,
+the backlog, and your team branch. This is your only approved repo.
+
+```bash
+gh repo clone dgokeeffe/ppcs-challenge
+cd ppcs-challenge
+git switch team-<NN>   # your team number, e.g. team-03
+```
+
+If you cannot see the repo or your branch, tell a facilitator before the round
+starts — do not lose challenge time on access.
+
 ## 1. Open The Working Files
 
 Keep these files open:
 
 - `00-participant-guide.md`
+- `00-ways-of-working.md`
 - `00-operating-envelope-card.md`
 - `02-brief-template.md`
 - `ref-scoreboard.md`
@@ -18,6 +33,9 @@ Keep these files open:
 
 Use the ticket files under `tickets/` as the backlog. Do not assume a ticket is
 safe just because it looks ordinary; reason from the operating envelope.
+
+Before you dispatch, open `00-ways-of-working.md`: build to a spec, orient to a
+goal, validate context before planning, then evaluate the run before you accept.
 
 ## 2. Check The Local Service
 

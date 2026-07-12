@@ -11,6 +11,11 @@ workbench) running on Databricks Apps, Lakebase, and Unity Catalog. You do not
 type most of the code. You **write briefs, dispatch a coding agent, review its
 draft PRs and traces, prove the guardrails hold, and measure the harness.**
 
+You and your agents work in **one repo: `dgokeeffe/ppcs-challenge`** — it holds
+the PPCS service (`service/`), the ticket backlog (`tickets/`), and your team
+branch (`team-01`…`team-10`). That is the only "approved repo"; reaching for any
+other repo is outside the envelope.
+
 The day is three scored rounds:
 
 1. **Dispatch & Review** — clear backlog tickets by dispatching agents and
@@ -28,15 +33,18 @@ Catching an unsafe path is worth more than shipping a feature. The score is
 | When | Open |
 |---|---|
 | First, to understand your role and the loop | `00-participant-guide.md` |
+| Before Round 1, the endorsed ticket process | `00-ways-of-working.md` (build to spec → goal → validate/evaluate) |
 | Before every dispatch, kept open | `00-operating-envelope-card.md` (what agents may / may not do) |
 | To pick work | `tickets/` (the PPCS backlog) and `ref-scoreboard.md` |
 | To shape a dispatch | `02-brief-template.md` |
 | To review what came back | `02-reviewer-subagent-template.md`, `02-trace-review-worksheet.md` |
 | To run against the service | `service/` (the PPCS app + tests) |
+| When a ticket touches state | `LAKEBASE.md`, `01-base-app-architecture.md` |
 | When setup misbehaves | `01-day-of-quickstart.md`, `01-repo-access-self-test.md` |
 | To submit evidence | `ref-evidence-submission-template.md` |
 
-If you read nothing else first, read `00-participant-guide.md`.
+If you read nothing else first, read `00-participant-guide.md` and
+`00-ways-of-working.md`.
 
 ## Ground rules
 

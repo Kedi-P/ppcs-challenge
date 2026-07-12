@@ -40,20 +40,26 @@ If a ticket appears to require something outside this envelope, stop and documen
 
 ## The Loop
 
-Use the same loop for every ticket:
+Use the same loop for every ticket. The endorsed Round 1 process is spelled out
+in `00-ways-of-working.md`:
+
+> Build to a spec, orient to a goal, validate context before planning, then
+> evaluate the run before you accept a draft PR.
 
 1. Intake: read the ticket and acceptance criteria.
-2. Research: inspect only the files, tests, docs, and traces needed for the ticket.
-3. Validate: check whether the retrieved context is current, consistent, trustworthy, and inside the repo/tool/data/execution envelope.
-4. Plan: clarify ambiguity before implementation, then ask the agent for a small plan.
-5. Dispatch: let the agent implement one reviewable change.
-6. Observe: capture tests, CI/review-gate result, trace, branch, PR, active
+2. Spec / goal: map acceptance to executable checks; add a goal anchor when the
+   work is multi-criteria or long-running.
+3. Research: inspect only the files, tests, docs, and traces needed for the ticket.
+4. Validate: check whether the retrieved context is current, consistent, trustworthy, and inside the repo/tool/data/execution envelope.
+5. Plan: clarify ambiguity before implementation, then ask the agent for a small plan.
+6. Dispatch: let the agent implement one reviewable change.
+7. Observe: capture tests, CI/review-gate result, trace, branch, PR, active
    policies, execution scope, and any blocked actions.
-7. Evaluate: check the result with the right mechanism: tests for behavior,
+8. Evaluate: check the result with the right mechanism: tests for behavior,
    Semgrep or static checks for repeated code-shape risks, trace review for the
    agent trajectory, and reviewer rubric for judgment.
-8. Review: inspect the diff and evidence before accepting anything.
-9. Codify: if the agent made a repeatable mistake, capture the lesson in a brief, skill, reviewer config, or standing instruction.
+9. Review: inspect the diff and evidence before accepting anything.
+10. Codify: if the agent made a repeatable mistake, capture the lesson in a brief, skill, reviewer config, or standing instruction.
 
 This is loop engineering: the repeatable delivery loop matters more than any single prompt.
 
