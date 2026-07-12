@@ -2,6 +2,13 @@
 
 Use this as the live scoring sheet. Keep evidence links next to every score.
 
+During the workshop, the facilitator **live scoreboard** updates automatically
+when you open draft PRs from branches named `team-NN/…` (see `CONTRIBUTING.md`
+§ Branch model). Points roll up by team; judges can override any line. This
+markdown table is the rubric reference — you do not need to edit it by hand
+unless the facilitator asks you to paste evidence links here for the closing
+share-out.
+
 ## Rubric
 
 | Outcome | Points |

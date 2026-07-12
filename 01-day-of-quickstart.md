@@ -18,6 +18,11 @@ cd ppcs-challenge
 git switch team-<NN>   # your team number, e.g. team-03
 ```
 
+**Branch naming for scoring:** every ticket branch must keep the team prefix —
+`team-03/PPCS-001-fix-discount-rounding`, not `ppcs-001-fix`. Open draft PRs
+**into** your `team-NN` branch. The facilitator autoscorer reads the head branch
+to attribute points; see `CONTRIBUTING.md` § Branch model.
+
 Lakebase compute, CoDA workspace storage, and this repo are **shared** across
 teams. Use a **git worktree** per ticket branch so CoDA can write back from App
 local storage to the correct branch in the Databricks Git folder — see
@@ -92,7 +97,7 @@ change.
 
 Expected output:
 
-- branch name;
+- branch name (`team-NN/PPCS-XXX-short-slug` — required for live scoring);
 - draft PR or patch/diff;
 - test command and result;
 - trace or run id if available;

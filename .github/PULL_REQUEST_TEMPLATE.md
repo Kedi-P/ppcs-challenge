@@ -3,6 +3,11 @@
 ## Ticket
 PPCS-XXX — <title>
 
+## Team branch (required for live scoring)
+- **Head branch:** must be `team-NN/PPCS-XXX-short-slug` (see `CONTRIBUTING.md`)
+- **Base branch:** your team's `team-NN` integration branch — not `main`
+- Team inferred from head branch only; this section is for human reviewers
+
 ## Dispatch (Trigger / Context / Steerability)
 - **Trigger:** <you now | schedule | GitHub event | webhook | heartbeat>
 - **Context:** <brief + approved repo scope + governed MCP scope>

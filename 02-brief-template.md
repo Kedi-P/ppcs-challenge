@@ -49,6 +49,10 @@ Branch, edit, test, and open a draft PR only. Do not merge, deploy, access
 secrets, broaden permissions, read ungranted data, add unapproved egress, or log
 sensitive payloads.
 
+Branch naming (live scoring):
+Use `team-NN/PPCS-XXX-short-slug` off your team's `team-NN` branch. Open the
+draft PR into `team-NN`. Wrong prefix → points land under Unknown team.
+
 Heartbeat triggers may watch evolving state such as PR comments or failed
 checks and stage a draft response for review. They may not push, merge, deploy,
 approve, or broaden access autonomously.

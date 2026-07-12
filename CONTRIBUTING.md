@@ -18,6 +18,24 @@ Read `README.md` first for the challenge framing, then `START-HERE.md` and
 
 ## Branch model
 
+**Live scoring depends on branch names.** The facilitator PR autoscorer attributes
+each draft PR to a team by parsing the **head branch** (not the PR title or body).
+Keep the `team-NN` prefix on every branch you push and every PR you open.
+
+### Required convention
+
+| Part | Rule | Example |
+|---|---|---|
+| Team prefix | `team-` + two-digit number (`01`…`10`) | `team-03` |
+| Integration branch | Exactly `team-NN` off `main` | `team-03` |
+| Per-ticket branch | `team-NN/PPCS-XXX-short-slug` | `team-03/PPCS-001-fix-discount-rounding` |
+| Ticket id in branch | Include `PPCS-NNN` (helps ticket detection) | `…/PPCS-004-invalid-price-inputs` |
+
+Recognized variants (still scored to the same team): `team03`, `team_07`,
+`coda-team-4-ppcs-001`. **Not recognized:** branches with no `team-NN` token
+(e.g. `ppcs-001-fix`, `feature/my-fix`) — those land in **Unknown team** on the
+live board until a judge reassigns them.
+
 ```
 main  (protected, shared baseline)
  ├── team-01              ← your team's integration branch
@@ -30,10 +48,15 @@ main  (protected, shared baseline)
 1. Your team starts from its `team-NN` branch (already created off `main`).
 2. For each ticket, a CoDA agent branches off `team-NN` as
    `team-NN/PPCS-XXX-short-slug`, edits, runs tests, and opens a **draft PR**
-   back into `team-NN`.
+   **into `team-NN`** (base = your integration branch, head = the prefixed
+   ticket branch above).
 3. The senior engineer **reviews the queue** — accept / reject / send back —
    *with reasons*. Merge accepted work into `team-NN`.
 4. Keep `team-NN` green (baseline is 6 pass / 1 intentional PPCS-001 failure).
+
+**Check before opening the PR:** `git branch --show-current` shows
+`team-NN/PPCS-…` (or you are intentionally PRing from `team-NN`). Wrong branch
+name = your team's points do not roll up automatically.
 
 You do **not** merge into `main` during the workshop — `main` stays the clean
 shared baseline so every team starts from the same place and cross-team diffs
@@ -72,3 +95,7 @@ uv run uvicorn app.main:app --reload         # UI at http://localhost:8000/ , AP
 
 Score claims go through the scoreboard flow, not raw commits — see
 `ref-scoreboard.md` and `ref-evidence-submission-template.md`.
+
+Opening a **draft PR from a correctly prefixed branch** (`team-NN/…`) is what
+feeds the facilitator live scoreboard; you do not paste scores into this file
+during the workshop.

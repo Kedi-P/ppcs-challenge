@@ -56,6 +56,9 @@ If you read nothing else first, read `00-participant-guide.md` and
 
 ## Ground rules
 
+- Work on your team branch (`team-01`…`team-10`). Per-ticket branches must stay
+  prefixed: `team-NN/PPCS-XXX-short-slug` so draft PRs roll up on the live
+  scoreboard (see `CONTRIBUTING.md`).
 - Agents branch, edit, test, and open **draft** PRs — they never merge or
   deploy. A human stays on the loop.
 - If a ticket seems to need something outside the envelope (a secret, an
