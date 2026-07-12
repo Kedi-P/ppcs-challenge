@@ -45,7 +45,10 @@ resources:
             value: REPLACE_WITH_LAKEBASE_HOST
 
 targets:
-  daveok:
+  # Set your own Databricks CLI profile here (or pass -p <profile> on the
+  # command line). The facilitator uses a private profile that is not shipped
+  # in this participant repo.
+  dev:
     mode: development
     workspace:
-      profile: daveok
+      profile: DEFAULT
