@@ -1,8 +1,5 @@
 # Start Here — CoDA Engineering Challenge
 
-> **Clone `dgokeeffe/ppcs-challenge`**, not this facilitator repo. This file is
-> the authored copy that publishes there via `make publish-participant`.
-
 You are on a team of 2-3, running a governed coding-agent delivery loop for the
 **Promotional Pricing Compliance Service (PPCS)**. This page orients you in two
 minutes; open the linked files as you need them.
