@@ -116,10 +116,17 @@ def platform_lakebase_check() -> dict:
         "PPCS_LAKEBASE_TARGET",
         "mlflow-trace-test",
     )
-    lakebase_host = os.environ.get(
-        "PPCS_LAKEBASE_HOST",
-        "ep-restless-thunder-e4pr9wx3.database.australiaeast.azuredatabricks.net",
+    # A bound Databricks Apps `database` resource injects the connection
+    # coordinates (PGHOST/PGPORT/PGDATABASE/PGUSER) but no password — the app
+    # still mints its own short-lived OAuth token below. Prefer the injected
+    # values; fall back to PPCS_LAKEBASE_HOST for non-resource deploys.
+    lakebase_host = (
+        os.environ.get("PGHOST")
+        or os.environ.get("PPCS_LAKEBASE_HOST")
+        or "ep-restless-thunder-e4pr9wx3.database.australiaeast.azuredatabricks.net"
     )
+    lakebase_port = os.environ.get("PGPORT", "5432")
+    lakebase_dbname = os.environ.get("PGDATABASE", "databricks_postgres")
     team_schema = os.environ.get("PPCS_TEAM_SCHEMA", "team04")
 
     client = _workspace_client()
@@ -143,16 +150,20 @@ def platform_lakebase_check() -> dict:
         )
     token = credential["token"]
 
-    # The Postgres role is the identity that minted the credential — for an app
-    # service principal that's its application-id UUID, which the SDK surfaces
-    # as current_user.user_name. DATABRICKS_CLIENT_ID is unset in the app
-    # runtime (SP self-auth via apiKeyHelper), so deriving it from the client is
-    # the only reliable source.
-    db_user = os.environ.get("PPCS_LAKEBASE_USER") or client.current_user.me().user_name
+    # The Postgres role is the identity that minted the credential — the app
+    # service principal's application-id UUID. A bound `database` resource
+    # surfaces it as PGUSER; otherwise fall back to PPCS_LAKEBASE_USER or the
+    # SDK's current_user (DATABRICKS_CLIENT_ID is unset in the app runtime).
+    db_user = (
+        os.environ.get("PGUSER")
+        or os.environ.get("PPCS_LAKEBASE_USER")
+        or client.current_user.me().user_name
+    )
 
     with psycopg.connect(
         host=lakebase_host,
-        dbname="databricks_postgres",
+        port=lakebase_port,
+        dbname=lakebase_dbname,
         user=db_user,
         password=token,
         sslmode="require",
