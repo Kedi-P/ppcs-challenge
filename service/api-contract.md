@@ -97,7 +97,7 @@ Rules:
   optional and separate.
 - The existing `was_now_compliant` field must remain unchanged.
 
-### `/validate` request — duration fields (PPCS-006)
+### `/validate` request — duration fields (PPCS-006) — **implemented**
 
 ```json
 {
@@ -105,14 +105,38 @@ Rules:
   "was_price":  10.00,
   "now_price":  9.00,
   "start_date": "2026-07-13",
-  "end_date":   "2026-07-20"
+  "end_date":   "2026-07-19"
 }
 ```
 
 `start_date` and `end_date` are optional ISO-8601 dates. When absent, the
-duration rule is not evaluated. When present, a promo must span at least 7
-calendar days (inclusive) to pass the duration rule. The response adds a
-`duration_compliant` boolean alongside `was_now_compliant`.
+duration rule is not evaluated and the response keeps its base shape. When
+**both** are present, a promo must span at least 7 calendar days **counted
+inclusively** — both endpoints count, so `2026-07-13 → 2026-07-19` is 7 days
+(compliant) and `2026-07-13 → 2026-07-18` is 6 days (non-compliant). The
+response then adds a `duration_compliant` boolean alongside (and independent of)
+`was_now_compliant`:
+
+```json
+{
+  "sku": "SKU-1",
+  "discount_pct": 10,
+  "was_now_compliant": true,
+  "duration_compliant": false
+}
+```
+
+A reversed window (`end_date` before `start_date`) is rejected with `400` and a
+structured body:
+
+```json
+{
+  "detail": {
+    "error": "invalid_date_range",
+    "message": "end_date must not be before start_date"
+  }
+}
+```
 
 ### `/validate` request — multi-buy fields (PPCS-010)
 

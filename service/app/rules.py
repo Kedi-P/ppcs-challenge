@@ -6,9 +6,14 @@ backlog acts on. PPCS-001 lives in `discount_pct` below.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 #: A markdown must be at least this deep to count as a genuine discount.
 MIN_DISCOUNT_PCT = 5.0
+
+#: A promotion must run for at least this many calendar days (inclusive) to be
+#: a genuine, sustained offer rather than a fleeting one (PPCS-006).
+MIN_DURATION_DAYS = 7
 
 
 @dataclass
@@ -43,3 +48,23 @@ def is_was_now_compliant(promo: Promo) -> bool:
     is not rounded up past the bar.
     """
     return _markdown_pct(promo) >= MIN_DISCOUNT_PCT
+
+
+def duration_days(start: date, end: date) -> int:
+    """Calendar length of a promo window, counted **inclusively**.
+
+    Both endpoints count, so a promo running 2026-07-13..2026-07-19 spans 7
+    days, and a single-day promo (start == end) spans 1. This matches the
+    "at least 7 calendar days (inclusive)" wording in the API contract.
+    """
+    return (end - start).days + 1
+
+
+def is_duration_compliant(start: date, end: date) -> bool:
+    """A promo is duration-compliant when its inclusive window is long enough.
+
+    Independent of the was/now rule: a promo can clear one bar and fail the
+    other. Callers are responsible for rejecting reversed windows (end < start)
+    before asking for a verdict.
+    """
+    return duration_days(start, end) >= MIN_DURATION_DAYS
