@@ -50,10 +50,28 @@ unrounded markdown internally; do not use `discount_pct` as the threshold gate.
 | Status | Condition |
 |--------|-----------|
 | `422`  | Missing or wrong-type fields (FastAPI/Pydantic default) |
+| `400`  | Invalid price relationship (PPCS-004) |
 
-PPCS-004 adds explicit `400` rejections for invalid price relationships
-(`was_price ≤ 0`, `now_price < 0`, `now_price > was_price`). Once that ticket
-is implemented, document the error body shape here.
+A `400` is returned for impossible price inputs so they are never evaluated as
+a normal compliance verdict. The error body is FastAPI's standard `detail`
+envelope carrying a stable `reason_code`:
+
+```json
+{
+  "detail": {
+    "reason_code": "was_price_not_positive",
+    "detail": "was_price must be greater than 0."
+  }
+}
+```
+
+| Condition               | `reason_code`               |
+|-------------------------|-----------------------------|
+| `was_price <= 0`        | `was_price_not_positive`    |
+| `now_price < 0`         | `now_price_negative`        |
+| `now_price > was_price` | `now_price_above_was_price` |
+
+No request payload values are echoed in the error body.
 
 ---
 
