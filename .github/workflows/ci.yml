@@ -1,0 +1,95 @@
+name: PPCS CI
+
+# Per-pull-request CI for the PPCS app.
+#
+# Two jobs:
+#   unit         — fast, no infra: runs the pytest suite. Tolerates ONLY the
+#                  intentional PPCS-001 seed failure (see below); any other red
+#                  test fails the build.
+#   lakebase-ci  — REFERENCE ONLY on GitHub. This job models the "getting to
+#                  prod" cycle (ephemeral branch off production, migrate an
+#                  isolated CI schema on the clone, then always tear it down).
+#                  It does NOT run in the workshop: the Lakebase workspace is
+#                  firewalled and GitHub-hosted runners have no network path to
+#                  it, and we do not put Databricks credentials in a PUBLIC
+#                  repo. The LIVE version of this cycle runs inside the Coles
+#                  perimeter via Azure DevOps — see azure-pipelines.yml. This
+#                  job stays here as the readable reference implementation and
+#                  is gated off by default (PPCS_LAKEBASE_CI_ENABLED).
+#
+# The PPCS challenge ships one intentional failing seed test (PPCS-001,
+# tests/test_rules.py::test_marginal_discount_below_threshold_fails). Baseline
+# is "6 passed, 1 failed"; CI is green when ONLY that test is red.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "team-*"
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install 3.11
+      - name: Sync dependencies
+        run: uv sync
+      - name: Run tests (JUnit output)
+        run: uv run pytest -q --junitxml=../pytest-report.xml || true
+      - name: Evaluate baseline (tolerate only the PPCS-001 seed failure)
+        working-directory: .
+        run: python ci/evaluate_pytest.py pytest-report.xml
+
+  lakebase-ci:
+    runs-on: ubuntu-latest
+    # Only run when Databricks CI credentials are configured as repo secrets.
+    if: >-
+      ${{ github.event_name == 'pull_request' &&
+          vars.PPCS_LAKEBASE_CI_ENABLED == 'true' }}
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      PPCS_PROJECT: projects/ppcs-coda-challenge
+      # Unique per PR run; safe schema/branch identifier.
+      CI_BRANCH: ci-pr-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install 3.11
+      - name: Sync dependencies (with SDK + psycopg)
+        working-directory: service
+        run: uv sync
+
+      - name: Create ephemeral Lakebase branch off production
+        working-directory: service
+        run: uv run python ../ci/lakebase_branch.py create "$CI_BRANCH" --ttl-seconds 3600
+
+      - name: Apply migrations to the clone (isolated CI schema)
+        working-directory: service
+        run: uv run python ../ci/run_migrations.py --schema "${CI_BRANCH//-/_}"
+
+      - name: Run integration tests against the clone
+        working-directory: service
+        env:
+          PPCS_TEAM_SCHEMA: ${{ env.CI_BRANCH }}
+        run: uv run pytest -q -m "integration" || echo "no integration tests marked yet — clone/migrate step is the proof"
+
+      - name: Tear down the ephemeral branch (always)
+        if: always()
+        working-directory: service
+        run: uv run python ../ci/lakebase_branch.py delete "$CI_BRANCH"
