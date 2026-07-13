@@ -4,12 +4,14 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.rules import Promo, discount_pct, is_was_now_compliant
+from app.rules import Promo, discount_pct, is_was_now_compliant, multibuy_unit_price
 
 app = FastAPI(title="Promotional Pricing Compliance Service")
 STATIC_DIR = Path(__file__).parent / "static"
@@ -20,6 +22,8 @@ class PromoIn(BaseModel):
     sku: str
     was_price: float
     now_price: float
+    multibuy_qty: Optional[int] = None
+    bundle_price: Optional[float] = None
 
 
 @app.get("/", include_in_schema=False)
@@ -30,11 +34,24 @@ def workbench() -> FileResponse:
 @app.post("/validate")
 def validate(promo: PromoIn) -> dict:
     p = Promo(promo.sku, promo.was_price, promo.now_price)
-    return {
+    response = {
         "sku": p.sku,
         "discount_pct": discount_pct(p),
         "was_now_compliant": is_was_now_compliant(p),
     }
+    if promo.multibuy_qty is not None or promo.bundle_price is not None:
+        if promo.multibuy_qty is None or promo.bundle_price is None:
+            raise HTTPException(
+                status_code=400,
+                detail="multibuy_qty and bundle_price must be supplied together",
+            )
+        try:
+            response["effective_unit_price"] = multibuy_unit_price(
+                promo.multibuy_qty, promo.bundle_price
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return response
 
 
 def _execute_sql(statement: str) -> dict:

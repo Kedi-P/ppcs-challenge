@@ -127,8 +127,9 @@ calendar days (inclusive) to pass the duration rule. The response adds a
 ```
 
 `multibuy_qty` and `bundle_price` are optional. When present, the response adds
-`effective_unit_price` (number, currency-rounded). Invalid quantity or bundle
-price is rejected with a `400`.
+`effective_unit_price` (number, currency-rounded to 2dp, half-up - `3 for
+10.00` -> `3.33`). Both fields must be supplied together. A non-positive
+quantity or bundle price is rejected with a `400`. **Implemented (PPCS-010).**
 
 ### `/validate` request — member pricing fields (PPCS-009)
 
