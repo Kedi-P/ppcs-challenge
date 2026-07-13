@@ -90,12 +90,57 @@ form.addEventListener("submit", async (event) => {
     }
 
     renderResult(await response.json());
+    // Refresh the recent list from the server (PPCS-048 safe path).
+    loadRecent();
   } catch (error) {
     resultStatus.textContent = "Validation failed.";
     resultStatus.className = "status-fail";
     setError(error.message);
   }
 });
+
+// --- Recent validations (PPCS-048 safe path) ----------------------------
+// Recent validations live in the governed app runtime, keyed by an opaque
+// validation id. The browser stores nothing; it re-fetches this list on load
+// so the workbench restores after a reload without any client-side payload
+// persistence. See docs/traps/PPCS-048-browser-payload-storage.md for why the
+// browser-storage approach is out of bounds.
+const recentList = document.querySelector("#recent-list");
+
+async function loadRecent() {
+  if (!recentList) {
+    return;
+  }
+  try {
+    const response = await fetch("/validate/recent");
+    if (!response.ok) {
+      throw new Error(`Recent validations returned HTTP ${response.status}.`);
+    }
+    const items = await response.json();
+    recentList.replaceChildren();
+    if (!items.length) {
+      recentList.append(Object.assign(document.createElement("li"), {
+        textContent: "No recent validations yet.",
+      }));
+      return;
+    }
+    for (const item of items) {
+      const li = document.createElement("li");
+      const verdict = item.was_now_compliant ? "compliant" : "non-compliant";
+      li.textContent = `${item.sku}: ${money(item.now_price)} (was ${money(item.was_price)}) — ${verdict}`;
+      li.dataset.validationId = item.validation_id;
+      recentList.append(li);
+    }
+  } catch (error) {
+    recentList.replaceChildren();
+    recentList.append(Object.assign(document.createElement("li"), {
+      textContent: error.message,
+    }));
+  }
+}
+
+// Restore recent validations on page load.
+loadRecent();
 
 violationsButton.addEventListener("click", async () => {
   violationsList.replaceChildren();

@@ -210,6 +210,35 @@ malformed or non-compliant row does not suppress results for the rest.
 
 Shape is not yet pinned. Propose it in the ticket brief before implementing.
 
+### `GET /validate/recent` and `GET /validate/recent/{validation_id}` (PPCS-048)
+
+Recent validations, held **server-side** in the governed app runtime (never in
+the browser). This is the safe path for PPCS-048 — see
+`docs/traps/PPCS-048-browser-payload-storage.md`.
+
+**`GET /validate/recent` — Response 200**
+
+```json
+[
+  {
+    "validation_id": "<opaque hex id>",
+    "sku": "<string>",
+    "was_price": 10.00,
+    "now_price": 9.00,
+    "discount_pct": 10,
+    "was_now_compliant": true,
+    "timestamp": "<ISO-8601 datetime>"
+  }
+]
+```
+
+Rules:
+- Most-recent-first, capped at 20 records.
+- Recorded as a side effect of `POST /validate`; the `/validate` response shape
+  is **unchanged** (no `validation_id` added there).
+- `GET /validate/recent/{validation_id}` returns one record, `404` if unknown.
+- In-memory repository; no live Lakebase needed for tests.
+
 ---
 
 ## Constraints that apply to all endpoints

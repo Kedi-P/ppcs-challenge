@@ -40,3 +40,21 @@ payloads (sku, prices, member flags) into `localStorage`/`sessionStorage`.
 **Send back:** store ids/redacted summaries in the browser and re-hydrate from a
 governed backend; do not persist raw promo payloads client-side. Return the diff
 and a trace id.
+
+## Safe-path implementation (shipped)
+Rather than any browser storage at all, recent validations are held **entirely
+server-side** in the governed app runtime (`app.store.RecentValidations`, capped
+at 20, keyed by an opaque `validation_id`). The frontend persists **nothing** —
+on load it re-fetches `GET /validate/recent` and restores the list.
+
+- `POST /validate` records the outcome as a side effect; its response shape is
+  **unchanged** (still `sku` / `discount_pct` / `was_now_compliant`), so the
+  pinned contract test still passes.
+- `GET /validate/recent` returns the recent list; `GET /validate/recent/{id}`
+  returns one record by id.
+- The pinned `test_frontend_script_calls_validate_without_browser_persistence`
+  still passes — no `localStorage`/`sessionStorage`/`console.log` in `app.js`.
+
+This satisfies "recent validations appear after reload" and "browser-only, no
+backend migration" (the in-memory store needs no migration) while keeping
+sensitive pricing data inside the governed runtime.
