@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -10,16 +11,38 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.rules import Promo, discount_pct, is_was_now_compliant
+from app.violations import (
+    InMemoryViolationRepository,
+    Violation,
+    ViolationRepository,
+)
 
 app = FastAPI(title="Promotional Pricing Compliance Service")
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+#: Default number of recent violations returned by ``GET /violations``.
+VIOLATIONS_LIMIT = 50
+
+# Local state behind ``/violations``. In-memory keeps the endpoint testable
+# without live Lakebase credentials; swap for a persistent ``ViolationRepository``
+# implementation later without changing the endpoint.
+_violations: ViolationRepository = InMemoryViolationRepository()
 
 
 class PromoIn(BaseModel):
     sku: str
     was_price: float
     now_price: float
+
+
+class ViolationOut(BaseModel):
+    """One non-compliant validation, per api-contract.md ``GET /violations``."""
+
+    sku: str
+    rule_ids: list[str]
+    reason: str
+    timestamp: datetime
 
 
 @app.get("/", include_in_schema=False)
@@ -30,11 +53,41 @@ def workbench() -> FileResponse:
 @app.post("/validate")
 def validate(promo: PromoIn) -> dict:
     p = Promo(promo.sku, promo.was_price, promo.now_price)
+    compliant = is_was_now_compliant(p)
+    if not compliant:
+        # Record only non-compliant results, and only the non-sensitive fields
+        # the contract exposes — no prices are stored (data minimisation).
+        _violations.record(
+            Violation(
+                sku=p.sku,
+                rule_ids=["was_now"],
+                reason="Discount is below the minimum genuine-discount threshold.",
+                timestamp=datetime.now(timezone.utc),
+            )
+        )
     return {
         "sku": p.sku,
         "discount_pct": discount_pct(p),
-        "was_now_compliant": is_was_now_compliant(p),
+        "was_now_compliant": compliant,
     }
+
+
+@app.get("/violations")
+def violations() -> list[ViolationOut]:
+    """Recent non-compliant validations, newest verdict first.
+
+    Filtering happens at write time (only non-compliant results are recorded),
+    so compliant promos can never appear here.
+    """
+    return [
+        ViolationOut(
+            sku=v.sku,
+            rule_ids=v.rule_ids,
+            reason=v.reason,
+            timestamp=v.timestamp,
+        )
+        for v in _violations.recent(VIOLATIONS_LIMIT)
+    ]
 
 
 def _execute_sql(statement: str) -> dict:

@@ -178,9 +178,13 @@ constants. The API contract does not change. The implementation must:
 - Keep the rule logic injectable/testable without a live database.
 - Document the fallback behaviour if the config row is missing.
 
-### `GET /violations`
+### `GET /violations` (implemented — PPCS-014)
 
-Returns recent non-compliant validations from the app's local state.
+Returns recent non-compliant validations from the app's local state, newest
+verdict first. Non-compliant `/validate` results are recorded server-side into
+an in-memory `ViolationRepository` (`app/violations.py`); `/violations` reads
+the most recent (default 50) back. Only non-sensitive fields are stored — no
+prices — so payloads never leak through this endpoint.
 
 **Response 200** (`application/json`)
 
@@ -197,11 +201,17 @@ Returns recent non-compliant validations from the app's local state.
 
 Rules:
 - Returns only non-compliant validations; compliant promos are excluded.
+  Filtering happens at record time, not read time, so a compliant promo is
+  never stored.
+- Ordered by `timestamp` descending (newest first).
 - Empty list `[]` when there are no violations.
-- Must be testable without live Lakebase credentials; use a local repository
-  abstraction or in-memory fixture.
+- Testable without live Lakebase credentials via the in-memory
+  `ViolationRepository`; see `tests/test_violations.py`.
 - The existing `app.js` reads `violation.sku` and `violation.reason` — do not
   rename those fields.
+- `rule_ids` is a list of stable machine-readable rule identifiers (currently
+  `["was_now"]`); `reason` is a redacted human-readable string, never raw
+  request payload.
 
 ### `POST /validate/batch` (PPCS-029, PPCS-046)
 
