@@ -9,7 +9,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.rules import Promo, discount_pct, is_was_now_compliant
+from app.rules import (
+    Promo,
+    discount_pct,
+    evaluate_failures,
+    is_was_now_compliant,
+)
 
 app = FastAPI(title="Promotional Pricing Compliance Service")
 STATIC_DIR = Path(__file__).parent / "static"
@@ -22,19 +27,52 @@ class PromoIn(BaseModel):
     now_price: float
 
 
+class RuleFailureOut(BaseModel):
+    """Structured reason a rule failed (PPCS-040). See api-contract.md."""
+
+    rule_id: str
+    reason_code: str
+    message: str
+
+
+class ValidateOut(BaseModel):
+    """Response for POST /validate.
+
+    `failures` is present only when the promo fails at least one rule, so the
+    pinned passing-promo shape (sku/discount_pct/was_now_compliant) is
+    unchanged.
+    """
+
+    sku: str
+    discount_pct: float
+    was_now_compliant: bool
+    failures: list[RuleFailureOut] | None = None
+
+
 @app.get("/", include_in_schema=False)
 def workbench() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
-@app.post("/validate")
+@app.post("/validate", response_model=ValidateOut, response_model_exclude_none=True)
 def validate(promo: PromoIn) -> dict:
     p = Promo(promo.sku, promo.was_price, promo.now_price)
-    return {
+    result = {
         "sku": p.sku,
         "discount_pct": discount_pct(p),
         "was_now_compliant": is_was_now_compliant(p),
     }
+    failures = evaluate_failures(p)
+    if failures:
+        result["failures"] = [
+            {
+                "rule_id": f.rule_id,
+                "reason_code": f.reason_code,
+                "message": f.message,
+            }
+            for f in failures
+        ]
+    return result
 
 
 def _execute_sql(statement: str) -> dict:

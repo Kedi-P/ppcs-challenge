@@ -84,18 +84,28 @@ array of structured reason objects:
   "discount_pct": 5,
   "was_now_compliant": false,
   "failures": [
-    { "rule_id": "was_now", "reason_code": "discount_below_threshold" }
+    {
+      "rule_id": "was_now",
+      "reason_code": "discount_below_threshold",
+      "message": "Markdown does not reach the minimum 5% genuine-discount threshold."
+    }
   ]
 }
 ```
 
 Rules:
 - `failures` is present **only** when at least one rule fails; omit it for
-  passing promos.
+  passing promos. (Over HTTP the field is omitted via
+  `response_model_exclude_none`; the in-process `validate()` return likewise
+  has no `failures` key for a passing promo.)
 - `rule_id` is a stable machine-readable identifier, not prose.
-- `reason_code` is a stable machine-readable code; human-readable text is
-  optional and separate.
+- `reason_code` is a stable machine-readable code.
+- `message` is optional human-readable prose for display only. The UI must not
+  parse it; branch on `rule_id`/`reason_code` instead.
 - The existing `was_now_compliant` field must remain unchanged.
+
+**Status: implemented by PPCS-040.** `was_now` / `discount_below_threshold` is
+the first shipped reason. PPCS-024/later tickets append further rule ids here.
 
 ### `/validate` request — duration fields (PPCS-006)
 

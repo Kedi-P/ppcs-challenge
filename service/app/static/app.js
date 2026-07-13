@@ -35,6 +35,29 @@ function renderResult(result) {
     description.textContent = value;
     resultList.append(term, description);
   }
+
+  renderFailures(result.failures);
+}
+
+function renderFailures(failures) {
+  if (!Array.isArray(failures) || failures.length === 0) {
+    return;
+  }
+  const term = document.createElement("dt");
+  term.textContent = "Why it failed";
+  const description = document.createElement("dd");
+  const list = document.createElement("ul");
+  list.className = "reasons";
+  for (const failure of failures) {
+    const item = document.createElement("li");
+    // Prefer the human-readable message; fall back to the stable reason code.
+    item.textContent = failure.message || failure.reason_code || failure.rule_id;
+    item.dataset.ruleId = failure.rule_id || "";
+    item.dataset.reasonCode = failure.reason_code || "";
+    list.append(item);
+  }
+  description.append(list);
+  resultList.append(term, description);
 }
 
 function readPromo() {
