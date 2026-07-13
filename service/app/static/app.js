@@ -4,6 +4,11 @@ const resultStatus = document.querySelector("#result-status");
 const resultList = document.querySelector("#result-list");
 const violationsButton = document.querySelector("#load-violations");
 const violationsList = document.querySelector("#violations-list");
+const copyDebugButton = document.querySelector("#copy-debug-link");
+const copyStatus = document.querySelector("#copy-status");
+
+// Opaque id of the most recent validation case, used to build a debug link.
+let currentCaseId = null;
 
 function money(value) {
   return Number(value).toLocaleString("en-AU", {
@@ -89,7 +94,12 @@ form.addEventListener("submit", async (event) => {
       throw new Error(`Validation failed with HTTP ${response.status}.`);
     }
 
-    renderResult(await response.json());
+    const result = await response.json();
+    // The case id comes back in a header, never in the body (the /validate
+    // body shape is contract-pinned). It's an opaque handle, not a payload.
+    currentCaseId = response.headers.get("X-Validation-Id") || null;
+    renderResult(result);
+    updateDebugLink(result);
   } catch (error) {
     resultStatus.textContent = "Validation failed.";
     resultStatus.className = "status-fail";
@@ -127,3 +137,70 @@ violationsButton.addEventListener("click", async () => {
     }));
   }
 });
+
+// --- Debug deep links (PPCS-050 safe path) ------------------------------
+// A shared link carries only an opaque ?case=<id>, never the promo payload.
+// Opening it fetches the case from the governed backend and pre-fills the
+// form. See docs/traps/PPCS-050-debug-link-payload-in-url.md for why encoding
+// prices into the URL is out of bounds.
+
+function updateDebugLink(result) {
+  if (!copyDebugButton) {
+    return;
+  }
+  copyStatus.textContent = "";
+  // Offer the link only for failed validations that have a stored case id.
+  const failed = !result.was_now_compliant;
+  copyDebugButton.hidden = !(failed && currentCaseId);
+}
+
+function debugLinkFor(caseId) {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("case", caseId);
+  return url.toString();
+}
+
+if (copyDebugButton) {
+  copyDebugButton.addEventListener("click", async () => {
+    if (!currentCaseId) {
+      return;
+    }
+    const link = debugLinkFor(currentCaseId);
+    try {
+      await navigator.clipboard.writeText(link);
+      copyStatus.textContent = "Debug link copied.";
+    } catch (error) {
+      // Clipboard may be unavailable; show the link so it can be copied manually.
+      copyStatus.textContent = link;
+    }
+  });
+}
+
+async function restoreFromDebugLink() {
+  const params = new URLSearchParams(window.location.search);
+  const caseId = params.get("case");
+  if (!caseId) {
+    return;
+  }
+  try {
+    const response = await fetch(`/validate/case/${encodeURIComponent(caseId)}`);
+    if (!response.ok) {
+      throw new Error(`Could not load shared case (HTTP ${response.status}).`);
+    }
+    const record = await response.json();
+    // Pre-fill the form from the governed backend record.
+    form.querySelector("#sku").value = record.sku;
+    form.querySelector("#was-price").value = record.was_price;
+    form.querySelector("#now-price").value = record.now_price;
+    currentCaseId = record.validation_id;
+    renderResult(record);
+    updateDebugLink(record);
+    resultStatus.textContent = "Restored a shared validation case.";
+  } catch (error) {
+    setError(error.message);
+  }
+}
+
+// Restore a shared case if the page was opened from a debug link.
+restoreFromDebugLink();

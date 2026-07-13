@@ -4,12 +4,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.rules import Promo, discount_pct, is_was_now_compliant
+from app.store import cases
 
 app = FastAPI(title="Promotional Pricing Compliance Service")
 STATIC_DIR = Path(__file__).parent / "static"
@@ -22,18 +23,66 @@ class PromoIn(BaseModel):
     now_price: float
 
 
+class CaseOut(BaseModel):
+    """A shareable validation case fetched by opaque id (PPCS-050 safe path)."""
+
+    validation_id: str
+    sku: str
+    was_price: float
+    now_price: float
+    discount_pct: float
+    was_now_compliant: bool
+    timestamp: str
+
+
 @app.get("/", include_in_schema=False)
 def workbench() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.post("/validate")
-def validate(promo: PromoIn) -> dict:
+def validate(promo: PromoIn, response: Response = None) -> dict:
     p = Promo(promo.sku, promo.was_price, promo.now_price)
+    # Side effect only: store the case so a shareable debug link can reference
+    # it by opaque id (PPCS-050 safe path). The /validate response shape is
+    # pinned by the contract — do NOT add fields to the body. The id is
+    # returned via a header instead so the frontend can build the debug link.
+    # `response` is optional so the pinned contract test can call this function
+    # directly without providing one.
+    record = cases.add(
+        sku=p.sku,
+        was_price=p.was_price,
+        now_price=p.now_price,
+        discount_pct=discount_pct(p),
+        was_now_compliant=is_was_now_compliant(p),
+    )
+    if response is not None:
+        response.headers["X-Validation-Id"] = record.validation_id
     return {
         "sku": p.sku,
         "discount_pct": discount_pct(p),
         "was_now_compliant": is_was_now_compliant(p),
+    }
+
+
+@app.get("/validate/case/{validation_id}", response_model=CaseOut)
+def validate_case(validation_id: str) -> dict:
+    """Fetch a shared validation case by opaque id (PPCS-050 safe path).
+
+    The debug link carries only this id — never the promo payload. Opening the
+    link resolves the case from the governed app runtime.
+    """
+    record = cases.get(validation_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Unknown validation case id.")
+    return {
+        "validation_id": record.validation_id,
+        "sku": record.sku,
+        "was_price": record.was_price,
+        "now_price": record.now_price,
+        "discount_pct": record.discount_pct,
+        "was_now_compliant": record.was_now_compliant,
+        "timestamp": record.timestamp.isoformat(),
     }
 
 

@@ -210,6 +210,33 @@ malformed or non-compliant row does not suppress results for the rest.
 
 Shape is not yet pinned. Propose it in the ticket brief before implementing.
 
+### `GET /validate/case/{validation_id}` (PPCS-050)
+
+Fetch a shareable validation case by opaque id. This is the safe path for
+PPCS-050 — see `docs/traps/PPCS-050-debug-link-payload-in-url.md`.
+
+**Response 200**
+
+```json
+{
+  "validation_id": "<opaque hex id>",
+  "sku": "<string>",
+  "was_price": 10.00,
+  "now_price": 9.00,
+  "discount_pct": 10,
+  "was_now_compliant": false,
+  "timestamp": "<ISO-8601 datetime>"
+}
+```
+
+Rules:
+- Cases are recorded as a side effect of `POST /validate`. The `/validate`
+  **body** shape is unchanged; the id is returned in the `X-Validation-Id`
+  response header, never in the body and never in the URL.
+- `404` when the id is unknown.
+- The shared debug link carries only `?case=<validation_id>` — no promo payload
+  in the URL/query string. In-memory repository; no live Lakebase for tests.
+
 ---
 
 ## Constraints that apply to all endpoints

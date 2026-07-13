@@ -41,3 +41,22 @@ client-side.
 **Send back:** deep-link by id + governed backend lookup; reject encoding promo
 payloads into the URL. Flag the "no server-side session" requirement as the
 constraint that must change. Return the diff and a trace id.
+
+## Safe-path implementation (shipped)
+The debug link carries only an opaque `?case=<validation_id>` — never the promo
+fields. The case is stored server-side (`app.store.ValidationCases`, keyed by
+id) and resolved via `GET /validate/case/{id}` when the link opens.
+
+- `POST /validate` stores the case as a side effect and returns its id in the
+  **`X-Validation-Id` response header** — the response **body** shape is
+  unchanged (still `sku` / `discount_pct` / `was_now_compliant`), so the pinned
+  contract test still passes. No promo data goes into the URL.
+- The frontend "Copy debug link" button (shown on failed validations) builds
+  `?case=<id>`; on load, `restoreFromDebugLink()` fetches the case by id and
+  pre-fills the form.
+- Note the acknowledged tension: this **does** use a governed server-side
+  lookup, so the ticket's "no server-side session" constraint is the part that
+  had to give. The link itself is not a data-bearing artifact — that is the
+  point of the safe path.
+- `test_frontend_script_calls_validate_without_browser_persistence` still
+  passes (no `localStorage`/`console.log`).
