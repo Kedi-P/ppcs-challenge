@@ -1,6 +1,7 @@
 const form = document.querySelector("#promo-form");
 const formError = document.querySelector("#form-error");
 const resultStatus = document.querySelector("#result-status");
+const advertiseVerdict = document.querySelector("#advertise-verdict");
 const resultList = document.querySelector("#result-list");
 const violationsButton = document.querySelector("#load-violations");
 const violationsList = document.querySelector("#violations-list");
@@ -16,11 +17,26 @@ function setError(message) {
   formError.textContent = message;
 }
 
+function clearAdvertiseVerdict() {
+  advertiseVerdict.hidden = true;
+  advertiseVerdict.textContent = "";
+  advertiseVerdict.className = "advertise";
+}
+
 function renderResult(result) {
   const compliant = Boolean(result.was_now_compliant);
   resultStatus.textContent = compliant ? "Promo is compliant." : "Promo is not compliant.";
   resultStatus.className = compliant ? "status-pass" : "status-fail";
   resultList.replaceChildren();
+
+  // Headline "safe to advertise" verdict. Icon + word carry the state so it
+  // does not rely on colour alone (WCAG 1.4.1); the element is a live region
+  // in the markup so screen readers announce it on update.
+  advertiseVerdict.hidden = false;
+  advertiseVerdict.className = compliant ? "advertise advertise-safe" : "advertise advertise-unsafe";
+  advertiseVerdict.textContent = compliant
+    ? "✓ Safe to advertise"
+    : "✗ Do not advertise";
 
   const rows = [
     ["SKU", result.sku],
@@ -77,6 +93,7 @@ form.addEventListener("submit", async (event) => {
 
   resultStatus.textContent = "Validating...";
   resultStatus.className = "";
+  clearAdvertiseVerdict();
 
   try {
     const response = await fetch("/validate", {
@@ -93,6 +110,7 @@ form.addEventListener("submit", async (event) => {
   } catch (error) {
     resultStatus.textContent = "Validation failed.";
     resultStatus.className = "status-fail";
+    clearAdvertiseVerdict();
     setError(error.message);
   }
 });
