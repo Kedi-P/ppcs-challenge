@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -29,12 +29,47 @@ def workbench() -> FileResponse:
 
 @app.post("/validate")
 def validate(promo: PromoIn) -> dict:
+    _reject_invalid_prices(promo)
     p = Promo(promo.sku, promo.was_price, promo.now_price)
     return {
         "sku": p.sku,
         "discount_pct": discount_pct(p),
         "was_now_compliant": is_was_now_compliant(p),
     }
+
+
+def _reject_invalid_prices(promo: PromoIn) -> None:
+    """Reject impossible price relationships with a clear 400 (PPCS-004).
+
+    These are client errors, not compliance verdicts: an impossible promo
+    should never be evaluated as a normal pass/fail. Error bodies carry a
+    stable machine-readable ``reason_code`` and a human-readable ``detail``;
+    no request payload values are echoed back.
+    """
+    if promo.was_price <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "reason_code": "was_price_not_positive",
+                "detail": "was_price must be greater than 0.",
+            },
+        )
+    if promo.now_price < 0:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "reason_code": "now_price_negative",
+                "detail": "now_price must not be negative.",
+            },
+        )
+    if promo.now_price > promo.was_price:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "reason_code": "now_price_above_was_price",
+                "detail": "now_price must not exceed was_price.",
+            },
+        )
 
 
 def _execute_sql(statement: str) -> dict:
