@@ -45,6 +45,10 @@ Validate one promotional price change against the current compliance rules.
 `discount_pct` is the rounded display value. Compliance decisions use the
 unrounded markdown internally; do not use `discount_pct` as the threshold gate.
 
+When a promo fails one or more rules the response also carries a `failures`
+array of structured reason objects (implemented by PPCS-024 â see below). The
+array is omitted entirely for a fully compliant promo.
+
 **Error responses**
 
 | Status | Condition |
