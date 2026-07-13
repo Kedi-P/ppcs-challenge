@@ -143,9 +143,11 @@ price is rejected with a `400`.
 ```
 
 `member_only` and `display_channel` are optional. When `member_only=true` and
-`display_channel` indicates a general public context, the promo is
-non-compliant for the member pricing rule. The response adds
-`member_price_compliant`.
+`display_channel` indicates a general public context (`public`, `general`,
+`storefront`, `retail`), the promo is non-compliant for the member pricing
+rule. A member-only promo labelled member-only, and any non-member (public)
+promo, are compliant for this rule. The response adds `member_price_compliant`
+whenever either field is supplied. **Implemented (PPCS-009).**
 
 ### `/validate` response — `was_price_verified` field (PPCS-056)
 

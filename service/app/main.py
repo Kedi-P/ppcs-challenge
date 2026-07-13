@@ -4,12 +4,19 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from typing import Optional
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.rules import Promo, discount_pct, is_was_now_compliant
+from app.rules import (
+    Promo,
+    discount_pct,
+    is_member_price_compliant,
+    is_was_now_compliant,
+)
 
 app = FastAPI(title="Promotional Pricing Compliance Service")
 STATIC_DIR = Path(__file__).parent / "static"
@@ -20,6 +27,8 @@ class PromoIn(BaseModel):
     sku: str
     was_price: float
     now_price: float
+    member_only: Optional[bool] = None
+    display_channel: Optional[str] = None
 
 
 @app.get("/", include_in_schema=False)
@@ -30,11 +39,16 @@ def workbench() -> FileResponse:
 @app.post("/validate")
 def validate(promo: PromoIn) -> dict:
     p = Promo(promo.sku, promo.was_price, promo.now_price)
-    return {
+    response = {
         "sku": p.sku,
         "discount_pct": discount_pct(p),
         "was_now_compliant": is_was_now_compliant(p),
     }
+    if promo.member_only is not None or promo.display_channel is not None:
+        response["member_price_compliant"] = is_member_price_compliant(
+            bool(promo.member_only), promo.display_channel
+        )
+    return response
 
 
 def _execute_sql(statement: str) -> dict:
